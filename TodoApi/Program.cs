@@ -3,11 +3,9 @@ using TodoApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configurar Banco SQLite
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=todo.db"));
 
-// 2. Liberar CORS para o Front-end conseguir acessar
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirFront", policy =>
@@ -22,15 +20,9 @@ var app = builder.Build();
 
 app.UseCors("PermitirFront");
 
-// ==========================================
-// ENDPOINTS / ROTAS DA API
-// ==========================================
-
-// GET: Buscar todas as tarefas
 app.MapGet("/tarefas", async (AppDbContext db) =>
     await db.Tarefas.ToListAsync());
 
-// POST: Criar uma nova tarefa
 app.MapPost("/tarefas", async (Tarefa novaTarefa, AppDbContext db) =>
 {
     db.Tarefas.Add(novaTarefa);
@@ -38,7 +30,6 @@ app.MapPost("/tarefas", async (Tarefa novaTarefa, AppDbContext db) =>
     return Results.Created($"/tarefas/{novaTarefa.Id}", novaTarefa);
 });
 
-// PUT: Atualizar tarefa existente
 app.MapPut("/tarefas/{id}", async (int id, Tarefa tarefaAtualizada, AppDbContext db) =>
 {
     var tarefa = await db.Tarefas.FindAsync(id);
@@ -55,7 +46,6 @@ app.MapPut("/tarefas/{id}", async (int id, Tarefa tarefaAtualizada, AppDbContext
     return Results.NoContent();
 });
 
-// DELETE: Excluir uma tarefa
 app.MapDelete("/tarefas/{id}", async (int id, AppDbContext db) =>
 {
     var tarefa = await db.Tarefas.FindAsync(id);
@@ -65,5 +55,15 @@ app.MapDelete("/tarefas/{id}", async (int id, AppDbContext db) =>
     await db.SaveChangesAsync();
     return Results.Ok();
 });
+app.MapDelete("/tarefas/todas", async (AppDbContext db) =>
+{
+    var todasAsTarefas = await db.Tarefas.ToListAsync();
+    
+    if (!todasAsTarefas.Any()) return Results.Ok();
 
+    db.Tarefas.RemoveRange(todasAsTarefas);
+    await db.SaveChangesAsync();
+    
+    return Results.Ok();
+});
 app.Run();
