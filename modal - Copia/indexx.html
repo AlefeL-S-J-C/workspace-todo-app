@@ -30,7 +30,7 @@
                 <div class="card shadow">
                     <div class="card-header bg-primary text-white text-center py-3">
                         <h3 class="mb-0">Minhas Tarefas</h3>
-                        <small>Persistência com LocalStorage</small>
+                        <small>Persistência com SQLite</small>
                     </div>
 
                     <div class="card-body">
@@ -107,14 +107,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="selectUrgenciaModal" class="form-label">Grau de Urgência</label>
-                            <select class="form-select" id="selectUrgenciaModal" required>
-                                <option value="" disabled selected style="color: #000; background-color: #fff;">Selecione a urgência...</option>
-                                <option value="1" style="background-color: #007bff; color: #ffffff; font-weight: bold;">Azul (Não Urgente)</option>
-                                <option value="2" style="background-color: #198754; color: #ffffff; font-weight: bold;">Verde (Pouco Urgente)</option>
-                                <option value="3" style="background-color: #ffc107; color: #000000; font-weight: bold;">Amarelo (Urgente)</option>
-                                <option value="4" style="background-color: #fd7e14; color: #ffffff; font-weight: bold;">Laranja (Muito Urgente)</option>
-                                <option value="5" style="background-color: #dc3545; color: #ffffff; font-weight: bold;">Vermelho (Imediato)</option>
-                            </select>
+                            <select class="form-select" id="selectUrgenciaModal" required></select>
                         </div>
                         <div class="text-end">
                             <button type="button" class="btn btn-secondary me-2"
@@ -161,14 +154,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="selectEditarUrgencia" class="form-label">Alterar Grau de Urgência</label>
-                            <label for="selectEditarUrgencia" class="form-label">Alterar Grau de Urgência</label>
-                            <select class="form-select" id="selectEditarUrgencia" required>
-                                <option value="1" style="background-color: #007bff; color: #ffffff; font-weight: bold;">Azul (Não Urgente)</option>
-                                <option value="2" style="background-color: #198754; color: #ffffff; font-weight: bold;">Verde (Pouco Urgente)</option>
-                                <option value="3" style="background-color: #ffc107; color: #000000; font-weight: bold;">Amarelo (Urgente)</option>
-                                <option value="4" style="background-color: #fd7e14; color: #ffffff; font-weight: bold;">Laranja (Muito Urgente)</option>
-                                <option value="5" style="background-color: #dc3545; color: #ffffff; font-weight: bold;">Vermelho (Imediato)</option>
-                            </select>
+                            <select class="form-select" id="selectEditarUrgencia" required></select>
                         </div>
                         <div class="text-end">
                             <button type="button" class="btn btn-secondary me-2"

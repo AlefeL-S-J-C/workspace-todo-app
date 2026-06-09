@@ -3,14 +3,10 @@ let filtroAtual = "todas";
 let termoPesquisa = "";
 
 const API_URL = "http://localhost:5152/tarefas";
+const API_URGENCIAS_URL = "http://localhost:5152/urgencias";
 
-const arrUrgencia = [
-    { id: 1, descricao: "Não Urgente", prazo: "24 dias", cor: "#007bff", classe: "bg-primary" },
-    { id: 2, descricao: "Pouco Urgente", prazo: "12 dias", cor: "#198754", classe: "bg-success" },
-    { id: 3, descricao: "Urgente", prazo: "6 dias", cor: "#ffc107", classe: "bg-warning" },
-    { id: 4, descricao: "Muito Urgente", prazo: "1 dia", cor: "#fd7e14", classe: "bg-orange" },
-    { id: 5, descricao: "Imediato", prazo: "Imediato", cor: "#dc3545", classe: "bg-danger" }
-];
+let arrUrgencia = [];
+
 const formModalTarefa = document.getElementById("formModalTarefa");
 const inputTituloModal = document.getElementById("inputTituloModal");
 const inputDataInicioModal = document.getElementById("inputDataInicioModal");
@@ -43,6 +39,52 @@ const swalWithBootstrapButtons = Swal.mixin({
     customClass: { confirmButton: "btn btn-success ms-2", cancelButton: "btn btn-danger" },
     buttonsStyling: false
 });
+
+const hojeCompleto = new Date();
+const dataMinimaFormatada = hojeCompleto.toISOString().split('T')[0];
+if (inputDataInicioModal) inputDataInicioModal.min = dataMinimaFormatada;
+if (inputEditarDataInicio) inputEditarDataInicio.min = dataMinimaFormatada;
+
+function carregarUrgencias() {
+    fetch(API_URGENCIAS_URL)
+        .then(res => res.json())
+        .then(dados => {
+            arrUrgencia = dados;
+            renderizarUrgencias();
+            carregarTarefas();
+        })
+        .catch(err => console.error("Erro ao carregar urgências da API:", err));
+}
+
+function renderizarUrgencias() {
+    selectUrgenciaModal.innerHTML = "";
+    selectEditarUrgencia.innerHTML = "";
+
+    const optDefault = document.createElement("option");
+    optDefault.value = "";
+    optDefault.disabled = true;
+    optDefault.selected = true;
+    optDefault.textContent = "Selecione a urgência...";
+    selectUrgenciaModal.appendChild(optDefault);
+
+    arrUrgencia.forEach(urg => {
+        const optNova = document.createElement("option");
+        optNova.value = urg.id;
+        optNova.textContent = `${urg.descricao} (Prazo: ${urg.prazo})`;
+        optNova.style.backgroundColor = urg.cor;
+        optNova.style.color = urg.cor === "#ffc107" ? "#000000" : "#ffffff";
+        optNova.style.fontWeight = "bold";
+        selectUrgenciaModal.appendChild(optNova);
+
+        const optEditar = document.createElement("option");
+        optEditar.value = urg.id;
+        optEditar.textContent = `${urg.descricao} (Prazo: ${urg.prazo})`;
+        optEditar.style.backgroundColor = urg.cor;
+        optEditar.style.color = urg.cor === "#ffc107" ? "#000000" : "#ffffff";
+        optEditar.style.fontWeight = "bold";
+        selectEditarUrgencia.appendChild(optEditar);
+    });
+}
 
 function carregarTarefas() {
     fetch(API_URL)
@@ -90,7 +132,8 @@ function renderizarTarefas() {
     }
 
     tarefasFiltradas.forEach(function (tarefa) {
-        const urgenciaDados = arrUrgencia.find(u => u.id === tarefa.urgenciaId) || arrUrgencia[0];
+        const urgenciaDados = arrUrgencia.find(u => u.id === tarefa.urgenciaId) || arrUrgencia[0] || { cor: "#6c757d", descricao: "Padrão" };
+        
         const li = document.createElement("li");
         li.className = "list-group-item d-flex align-items-center justify-content-between py-3";
         li.style.borderLeft = `6px solid ${urgenciaDados.cor}`;
@@ -146,8 +189,9 @@ function renderizarTarefas() {
             verTarefaDataInicio.textContent = formatarDataBR(tarefa.dataInicio);
             verTarefaDataFim.textContent = formatarDataBR(tarefa.dataFim, true);
             verTarefaDescricao.textContent = tarefa.descricao || "Nenhuma descrição informada.";
-            verTarefaUrgenciaBadge.textContent = `${urgenciaDados.descricao} (Prazo: ${urgenciaDados.prazo})`;
+            verTarefaUrgenciaBadge.textContent = `${urgenciaDados.descricao} (Prazo previsto: ${urgenciaDados.prazo})`;
             verTarefaUrgenciaBadge.style.backgroundColor = urgenciaDados.cor;
+            verTarefaUrgenciaBadge.style.color = urgenciaDados.cor === "#ffc107" ? "#000000" : "#ffffff";
         });
 
         const btnEditar = document.createElement("button");
@@ -161,7 +205,7 @@ function renderizarTarefas() {
             inputEditarDataInicio.value = tarefa.dataInicio;
             inputEditarDataFim.value = tarefa.dataFim;
             inputEditarDescricao.value = tarefa.descricao || "";
-            selectEditarUrgencia.value = tarefa.urgenciaId || 1;
+            selectEditarUrgencia.value = tarefa.urgenciaId;
         });
 
         const btnDeletar = document.createElement("button");
@@ -178,7 +222,6 @@ function renderizarTarefas() {
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // ATUALIZAÇÃO NO DELETAR: Envia o método DELETE para a API do C#
                     fetch(`${API_URL}/${tarefa.id}`, { method: "DELETE" })
                         .then(() => {
                             carregarTarefas();
@@ -218,14 +261,24 @@ inputPesquisa.addEventListener("input", function () {
 });
 
 formModalTarefa.addEventListener("submit", function (event) {
-    event.preventDefault();
+    event.preventDefault(); 
+    
     const texto = inputTituloModal.value.trim();
     const dataInicio = inputDataInicioModal.value;
     const dataFim = inputDataFimModal.value;
     const descricao = inputDescricaoModal.value.trim();
-    const urgenciaId = Number(selectUrgenciaModal.value) || 1;
+    const urgenciaId = Number(selectUrgenciaModal.value);
 
-    if (texto === "" || !dataInicio || !dataFim) return;
+    if (texto === "" || !dataInicio || !dataFim || !urgenciaId) {
+        Swal.fire({ icon: 'warning', title: 'Campos obrigatórios!', text: 'Por favor, preencha todos os campos e selecione a urgência.', confirmButtonColor: '#3085d6' });
+        return;
+    }
+
+    const dataAtualPura = new Date().toISOString().split('T')[0];
+    if (dataInicio < dataAtualPura) {
+        Swal.fire({ icon: 'error', title: 'Data Inválida!', text: 'Não é permitido selecionar uma data de início retroativa.', confirmButtonColor: '#d33' });
+        return;
+    }
 
     if (new Date(dataFim) < new Date(dataInicio + 'T00:00:00')) {
         Swal.fire({ icon: 'error', title: 'Erro nas datas!', text: 'A data final com horário não pode ser inferior à data inicial.', confirmButtonColor: '#d33' });
@@ -246,26 +299,58 @@ formModalTarefa.addEventListener("submit", function (event) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(novaTarefa)
     })
-    .then(res => res.json())
-    .then(() => {
-        carregarTarefas();
-        formModalTarefa.reset();
-        btnFecharModal.click();
-        Swal.fire({ position: "center", icon: "success", title: "Tarefa adicionada com sucesso!", showConfirmButton: false, timer: 1500 });
+    .then(res => {
+        if (!res.ok) throw new Error("Erro na resposta do servidor");
+        return res.json();
     })
-    .catch(err => console.error("Erro ao adicionar tarefa:", err));
+    .then(() => {
+        btnFecharModal.click();
+        formModalTarefa.reset();
+
+        setTimeout(() => {
+            Swal.fire({ 
+                icon: "success", 
+                title: "Tarefa adicionada!", 
+                text: "Salva com sucesso.",
+                showConfirmButton: false, 
+                timer: 1500,
+                timerProgressBar: true
+            }).then(() => {
+                carregarTarefas();
+            });
+        }, 400);
+    })
+    .catch(err => {
+        console.error(err);
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'Não foi possível salvar!', 
+            text: 'Verifique se o backend C# está ativo no terminal.',
+            confirmButtonColor: '#d33'
+        });
+    });
 });
 
 formModalEditarTarefa.addEventListener("submit", function (event) {
-    event.preventDefault();
+    event.preventDefault(); 
+    
     const idParaEditar = Number(inputEditarId.value);
     const textoAtualizado = inputEditarTitulo.value.trim();
     const dataInicioAtualizada = inputEditarDataInicio.value;
     const dataFimAtualizada = inputEditarDataFim.value;
     const descricaoAtualizada = inputEditarDescricao.value.trim();
-    const urgenciaAtualizada = Number(selectEditarUrgencia.value) || 1;
+    const urgenciaAtualizada = Number(selectEditarUrgencia.value);
 
-    if (textoAtualizado === "" || !dataInicioAtualizada || !dataFimAtualizada) return;
+    if (textoAtualizado === "" || !dataInicioAtualizada || !dataFimAtualizada || !urgenciaAtualizada) {
+        Swal.fire({ icon: 'warning', title: 'Campos obrigatórios!', text: 'Por favor, preencha todos os campos antes de salvar.', confirmButtonColor: '#3085d6' });
+        return;
+    }
+
+    const dataAtualPura = new Date().toISOString().split('T')[0];
+    if (dataInicioAtualizada < dataAtualPura) {
+        Swal.fire({ icon: 'error', title: 'Data Inválida!', text: 'Não é permitido selecionar uma data de início retroativa.', confirmButtonColor: '#d33' });
+        return;
+    }
 
     if (new Date(dataFimAtualizada) < new Date(dataInicioAtualizada + 'T00:00:00')) {
         Swal.fire({ icon: 'error', title: 'Erro nas datas!', text: 'A data final com horário não pode ser inferior à data inicial.', confirmButtonColor: '#d33' });
@@ -287,12 +372,35 @@ formModalEditarTarefa.addEventListener("submit", function (event) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(tarefaEditada)
     })
-    .then(() => {
-        carregarTarefas();
-        btnFecharModalEditar.click();
-        Swal.fire({ position: "center", icon: "success", title: "Tarefa atualizada com sucesso!", showConfirmButton: false, timer: 1500 });
+    .then(res => {
+        if (!res.ok) throw new Error("Erro na resposta do servidor");
+        return res;
     })
-    .catch(err => console.error("Erro ao editar tarefa:", err));
+    .then(() => {
+        btnFecharModalEditar.click();
+        
+        setTimeout(() => {
+            Swal.fire({ 
+                icon: "success", 
+                title: "Tarefa atualizada!", 
+                text: "Modificações salvas com sucesso.",
+                showConfirmButton: false, 
+                timer: 1500,
+                timerProgressBar: true
+            }).then(() => {
+                carregarTarefas();
+            });
+        }, 400);
+    })
+    .catch(err => {
+        console.error(err);
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'Erro ao atualizar!', 
+            text: 'Verifique se o backend C# está ativo no terminal.',
+            confirmButtonColor: '#d33'
+        });
+    });
 });
 
 btnFiltroTodas.addEventListener("click", function () { alterarFiltroAtivo(this, "todas"); });
@@ -305,19 +413,22 @@ btnLimparTodas.addEventListener("click", function (event) {
 
     swalWithBootstrapButtons.fire({
         title: "Tem certeza absoluta?",
-        text: "Isso limpará os dados visíveis locais!",
+        text: "Isso apagará TODAS as tarefas permanentemente do Banco de Dados!",
         icon: "warning",
         showCancelButton: true,
-        confirmButtonText: "Sim, limpar tela!",
+        confirmButtonText: "Sim, apagar tudo!",
         cancelButtonText: "Não, cancelar!",
         reverseButtons: true
     }).then((result) => {
         if (result.isConfirmed) {
-            tarefas = [];
-            renderizarTarefas();
-            swalWithBootstrapButtons.fire("Limpo!", "Sua lista local na tela foi limpa.", "success");
+            fetch(`${API_URL}/todas`, { method: "DELETE" })
+                .then(() => {
+                    carregarTarefas();
+                    swalWithBootstrapButtons.fire("Limpo!", "O banco de dados foi completamente limpo.", "success");
+                })
+                .catch(err => console.error("Erro ao limpar banco de dados:", err));
         }
     });
 });
 
-carregarTarefas();
+carregarUrgencias();
