@@ -1,6 +1,6 @@
 # 🚀 Workspace To-Do & Digital Notes
 
-Uma aplicação web completa para gestão de produtividade que combina um sistema de **Quadro Kanban** avançado com um **Bloco de Notas Digital** nativo, suportando múltiplas páginas e escrita à mão (com rato, toque ou canetas digitais como a S-Pen).
+Uma aplicação web completa para gestão de produtividade que combina um sistema de **Quadro Kanban** avançado com um **Bloco de Notas Digital** nativo, suportando múltiplas páginas e escrita à mão (com mouse, toque ou canetas digitais como a S-Pen).
 
 ## ✨ Funcionalidades Principais
 
