@@ -19,7 +19,7 @@ Uma aplicação web completa para gestão de produtividade que combina um sistem
 * **Visualização Ágil:** Visualiza as tuas notas através de uma galeria e navega pelas páginas sem precisar de as abrir para edição.
 
 ### 📱 Interface e Experiência (UI/UX)
-* **Design Responsivo:** O layout adapta-se perfeitamente a telemóveis, tablets e computadores de secretária.
+* **Design Responsivo:** O layout adapta-se perfeitamente a telemóveis, tablets e computadores.
 * **Menu Lateral Retrátil:** Num telemóvel, o menu transforma-se numa "gaveta" oculta para maximizar o espaço de ecrã.
 * **Pesquisa em Tempo Real:** Encontra rapidamente tarefas pendentes ou concluídas.
 
