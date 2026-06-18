@@ -23,8 +23,18 @@ app.UseCors("PermitirFront");
 app.MapGet("/urgencias", async (AppDbContext db) =>
     await db.Urgencias.ToListAsync());
 
+app.MapGet("/tags", async (AppDbContext db) =>
+    await db.Tags.ToListAsync());
+
 app.MapGet("/tarefas", async (AppDbContext db) =>
-    await db.Tarefas.Include(t => t.Urgencia).ToListAsync());
+{
+    var lista = await db.Tarefas
+        .Include(t => t.Urgencia)
+        .Include(t => t.Tag)
+        .Include(t => t.Subtarefas)
+        .ToListAsync();
+    return Results.Ok(lista);
+});
 
 app.MapPost("/tarefas", async (Tarefa novaTarefa, AppDbContext db) =>
 {
@@ -35,12 +45,19 @@ app.MapPost("/tarefas", async (Tarefa novaTarefa, AppDbContext db) =>
 
     if (string.IsNullOrWhiteSpace(novaTarefa.DataInicio) || string.IsNullOrWhiteSpace(novaTarefa.DataFim))
     {
-        return Results.BadRequest(new { mensagem = "As datas de início e prazo são obrigatórias." });
+        return Results.BadRequest(new { message = "As datas são obrigatórias." });
     }
 
-    DateTime dataHoje = DateTime.Today;
+    if (string.IsNullOrWhiteSpace(novaTarefa.Status))
+    {
+        novaTarefa.Status = "A Fazer";
+    }
+
+    TimeZoneInfo fusoBrasil = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+    DateTime dataHoje = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, fusoBrasil).Date;
+
     DateTime dataInicio = DateTime.Parse(novaTarefa.DataInicio).Date;
-    DateTime dataFim = DateTime.Parse(novaTarefa.DataFim).Date;
+    DateTime dataFim = DateTime.Parse(novaTarefa.DataFim);
 
     if (dataInicio < dataHoje)
     {
@@ -53,7 +70,6 @@ app.MapPost("/tarefas", async (Tarefa novaTarefa, AppDbContext db) =>
     }
 
     db.Tarefas.Add(novaTarefa);
-
     await db.SaveChangesAsync();
 
     return Results.Created($"/tarefas/{novaTarefa.Id}", novaTarefa);
@@ -62,20 +78,20 @@ app.MapPost("/tarefas", async (Tarefa novaTarefa, AppDbContext db) =>
 app.MapPut("/tarefas/{id}", async (int id, Tarefa tarefaAtualizada, AppDbContext db) =>
 {
     var tarefa = await db.Tarefas.FindAsync(id);
-
     if (tarefa is null) return Results.NotFound();
 
-    // Valida se o título atualizado possui conteúdo de caracteres válido
     if (string.IsNullOrWhiteSpace(tarefaAtualizada.Texto))
     {
-        return Results.BadRequest(new { mensagem = "O título da tarefa não pode ficar vazio." });
+        return Results.BadRequest(new { mensagem = "O título não pode ficar vazio." });
     }
 
-    DateTime dataHoje = DateTime.Today;
-    DateTime dataInicio = DateTime.Parse(tarefaAtualizada.DataInicio).Date;
-    DateTime dataFim = DateTime.Parse(tarefaAtualizada.DataFim).Date;
+    TimeZoneInfo fusoBrasil = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+    DateTime dataHoje = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, fusoBrasil).Date;
 
-    if (dataInicio < dataHoje)
+    DateTime dataInicio = DateTime.Parse(tarefaAtualizada.DataInicio).Date;
+    DateTime dataFim = DateTime.Parse(tarefaAtualizada.DataFim);
+
+    if (dataInicio < dataHoje && dataInicio != DateTime.Parse(tarefa.DataInicio).Date)
     {
         return Results.BadRequest(new { mensagem = "A data de início não pode ser inferior à data atual." });
     }
@@ -86,15 +102,15 @@ app.MapPut("/tarefas/{id}", async (int id, Tarefa tarefaAtualizada, AppDbContext
     }
 
     tarefa.Texto = tarefaAtualizada.Texto;
-    tarefa.Concluida = tarefaAtualizada.Concluida;
+    tarefa.Concluida = tarefaAtualizada.Status == "Concluído";
+    tarefa.Status = tarefaAtualizada.Status;
     tarefa.DataInicio = tarefaAtualizada.DataInicio;
     tarefa.DataFim = tarefaAtualizada.DataFim;
     tarefa.Descricao = tarefaAtualizada.Descricao;
     tarefa.UrgenciaId = tarefaAtualizada.UrgenciaId;
-
+    tarefa.TagId = tarefaAtualizada.TagId;
 
     await db.SaveChangesAsync();
-
     return Results.NoContent();
 });
 
@@ -104,28 +120,52 @@ app.MapDelete("/tarefas/{id}", async (int id, AppDbContext db) =>
     if (tarefa is null) return Results.NotFound();
 
     db.Tarefas.Remove(tarefa);
-
     await db.SaveChangesAsync();
-
     return Results.Ok();
 });
 
 app.MapDelete("/tarefas/todas", async (AppDbContext db) =>
 {
     var todasAsTarefas = await db.Tarefas.ToListAsync();
-
     if (!todasAsTarefas.Any()) return Results.Ok();
 
     db.Tarefas.RemoveRange(todasAsTarefas);
-
     await db.SaveChangesAsync();
     return Results.Ok();
+});
+
+app.MapPost("/subtarefas", async (Subtarefa novaSub, AppDbContext db) =>
+{
+    db.Subtarefas.Add(novaSub);
+    await db.SaveChangesAsync();
+    return Results.Created($"/subtarefas/{novaSub.Id}", novaSub);
+});
+
+app.MapPut("/subtarefas/{id}", async (int id, Subtarefa subAtualizada, AppDbContext db) =>
+{
+    var sub = await db.Subtarefas.FindAsync(id);
+    if (sub is null) return Results.NotFound();
+
+    sub.Texto = subAtualizada.Texto;
+    sub.Concluida = subAtualizada.Concluida;
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+app.MapDelete("/subtarefas/{id}", async (int id, AppDbContext db) =>
+{
+    var sub = await db.Subtarefas.FindAsync(id);
+    if (sub is null) return Results.NotFound();
+
+    db.Subtarefas.Remove(sub);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
 });
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
     db.Database.EnsureCreated();
 
     if (!db.Urgencias.Any())
@@ -140,4 +180,29 @@ using (var scope = app.Services.CreateScope())
         db.SaveChanges();
     }
 }
+app.MapGet("/anotacoes/{tagId}", async (int tagId, AppDbContext db) =>
+{
+    var anotacoes = await db.Anotacoes.Where(a => a.TagId == tagId).ToListAsync();
+    return Results.Ok(anotacoes);
+});
+
+app.MapPost("/anotacoes", async (Anotacao novaAnotacao, AppDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(novaAnotacao.Titulo))
+        return Results.BadRequest(new { mensagem = "O título da nota é obrigatório." });
+
+    db.Anotacoes.Add(novaAnotacao);
+    await db.SaveChangesAsync();
+    return Results.Created($"/anotacoes/{novaAnotacao.Id}", novaAnotacao);
+});
+
+app.MapDelete("/anotacoes/{id}", async (int id, AppDbContext db) =>
+{
+    var nota = await db.Anotacoes.FindAsync(id);
+    if (nota is null) return Results.NotFound();
+
+    db.Anotacoes.Remove(nota);
+    await db.SaveChangesAsync();
+    return Results.Ok();
+});
 app.Run();

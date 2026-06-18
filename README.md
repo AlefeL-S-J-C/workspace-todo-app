@@ -1,38 +1,48 @@
-# 🚀 Fullstack To-Do List (C# .NET 8 + SQLite + Vanilla JS)
+# 🚀 Workspace To-Do & Digital Notes
 
-Um aplicativo moderno e responsivo de gerenciamento de tarefas (To-Do List). O projeto foi evoluído de um armazenamento puramente local (`localStorage`) para uma arquitetura client-server completa, utilizando uma **Web API em C#** com persistência de dados em um banco de dados **SQLite**.
+Uma aplicação web completa para gestão de produtividade que combina um sistema de **Quadro Kanban** avançado com um **Bloco de Notas Digital** nativo, suportando múltiplas páginas e escrita à mão (com rato, toque ou canetas digitais como a S-Pen).
 
-## 🚀 Funcionalidades
+## ✨ Funcionalidades Principais
 
-- **CRUD Completo:** Criação, listagem, edição visual detalhada e exclusão de tarefas.
-- **Filtros Dinâmicos:** Filtragem rápida por tarefas "Todas", "Pendentes" ou "Concluídas".
-- **Sistema de Urgência:** Cores dinâmicas na borda de cada tarefa indicando o nível de prioridade (de "Não Urgente" até "Imediato").
-- **Barra de Pesquisa:** Busca em tempo real por termos digitados no título da tarefa.
-- **Persistência Real:** Dados salvos localmente em arquivo físico do SQLite através do Entity Framework Core.
-- **Modais Bootstrap:** Telas flutuantes elegantes para visualização e edição de registros.
-- **Feedbacks com SweetAlert2:** Alertas personalizados e confirmações de exclusão nativas com estilo Bootstrap.
+### 📋 Gestão de Tarefas (Kanban)
+* **Organização por Páginas/Tags:** Cria diferentes espaços de trabalho (ex: Faculdade, Trabalho, Casa).
+* **Quadro Interativo:** Move as tarefas entre "A Fazer", "Em Andamento" e "Concluído".
+* **Prazos Automáticos:** O sistema calcula automaticamente a data final com base no Grau de Urgência (Imediato, Muito Urgente, Urgente, Pouco Urgente, Não Urgente).
+* **Subtarefas (Checklists):** Adiciona passos menores dentro de uma tarefa principal e acompanha o progresso.
+* **Alertas Visuais:** As tarefas atrasadas ou a expirar no próprio dia piscam e recebem etiquetas de alerta automático.
+
+### 📝 Bloco de Notas Digital (Estilo Samsung Notes/Notion)
+* **Canvas Interativo:** Desenha e escreve à mão com suporte nativo a `PointerEvents` (ideal para ecrãs táteis e stylus/S-Pen).
+* **Múltiplas Páginas:** Cria cadernos inteiros dentro de uma única nota.
+* **Tipos de Folha:** Escolhe entre folha em branco, pautada, quadriculada ou pontilhada.
+* **Personalização de Traço:** Altera a cor, espessura e utiliza borracha.
+* **Visualização Ágil:** Visualiza as tuas notas através de uma galeria e navega pelas páginas sem precisar de as abrir para edição.
+
+### 📱 Interface e Experiência (UI/UX)
+* **Design Responsivo:** O layout adapta-se perfeitamente a telemóveis, tablets e computadores de secretária.
+* **Menu Lateral Retrátil:** Num telemóvel, o menu transforma-se numa "gaveta" oculta para maximizar o espaço de ecrã.
+* **Pesquisa em Tempo Real:** Encontra rapidamente tarefas pendentes ou concluídas.
 
 ## 🛠️ Tecnologias Utilizadas
 
-**Front-end:**
-- HTML5 / CSS3 / JavaScript (Vanilla)
-- Bootstrap 5 (Estilização e Layout)
-- SweetAlert2 (Mensagens de alerta e modais de confirmação)
+**Frontend:**
+* HTML5, CSS3, JavaScript (Vanilla)
+* [Bootstrap 5](https://getbootstrap.com/) (Componentes e Sistema de Grelha)
+* [SweetAlert2](https://sweetalert2.github.io/) (Pop-ups e Alertas bonitos)
+* HTML `<canvas>` API
 
-**Back-end:**
-- .NET 8 (Web API / Minimal APIs)
-- Entity Framework Core (ORM)
-- SQLite (Banco de dados relacional em arquivo local)
+**Backend:**
+* C# .NET 8 (Minimal APIs)
+* Entity Framework Core (ORM)
+* SQLite (Base de Dados Embutida)
 
----
-
-## 📦 Como Executar o Projeto
+## 🚀 Como Executar o Projeto Localmente
 
 ### Pré-requisitos
-- [.NET 8 SDK](https://dotnet.microsoft.com/pt-br/download/dotnet/8.0) instalado.
-- Extensão *Live Server* no VS Code (ou similar para rodar o Front-end).
+* [.NET 8 SDK](https://dotnet.microsoft.com/download) instalado na tua máquina.
+* Um navegador web moderno.
 
-### 1. Configurando e rodando o Back-end (C#)
-No seu terminal, navegue até a pasta da API:
-```bash
-cd BACKEND/TodoApi
+### Passos
+1. Clona este repositório:
+   ```bash
+   git clone [https://github.com/teu-utilizador/nome-do-repositorio.git](https://github.com/teu-utilizador/nome-do-repositorio.git)

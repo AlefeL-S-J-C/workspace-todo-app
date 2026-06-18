@@ -1,0 +1,264 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+.container {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 !important;
+}
+
+.card {
+    border: none !important;
+    border-radius: 24px !important;
+    background-color: #ffffff;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+    padding: 24px !important;
+    overflow: hidden;
+}
+
+.card-title {
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.5px;
+}
+
+.card .bg-primary, 
+.card div[style*="background-color: rgb(13, 110, 253)"],
+.card .rounded[class*="bg-"] {
+    border-radius: 16px !important;
+    padding: 24px !important;
+    margin-bottom: 20px;
+}
+
+#ListaTarefas {
+    padding-left: 0;
+    margin-top: 20px;
+    list-style: none;
+}
+
+.list-group-item {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    margin-bottom: 12px !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.list-group-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03) !important;
+    border-color: #cbd5e1 !important;
+}
+
+.list-group-item span.fw-bold {
+    font-size: 1.05rem;
+    color: #1e293b;
+}
+
+.form-check-input {
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-top: 0;
+    cursor: pointer;
+    border: 2px solid #cbd5e1;
+    border-radius: 6px !important;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.form-check-input:checked {
+    background-color: #10b981 !important;
+    border-color: #10b981 !important;
+}
+
+.concluida {
+    text-decoration: line-through;
+    color: #94a3b8 !important;
+    font-style: italic;
+    font-weight: 400 !important;
+    opacity: 0.65;
+    transition: all 0.3s ease;
+}
+
+.extra-small {
+    font-size: 0.8rem !important;
+    line-height: 1.4;
+    color: #64748b !important;
+}
+
+.extra-small b {
+    color: #475569;
+}
+
+.text-slate-300 {
+    color: #cbd5e1;
+}
+
+.btn {
+    border-radius: 12px !important;
+    padding: 10px 20px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.btn-group, .d-flex.gap-2 {
+    width: 100%;
+}
+
+.btn-outline-secondary {
+    border-color: #e2e8f0;
+    color: #64748b;
+    flex: 1;
+}
+
+.btn-outline-secondary:hover, .btn-outline-secondary.active {
+    background-color: #64748b !important;
+    border-color: #64748b !important;
+    color: #ffffff !important;
+}
+
+.unique-actions-container {
+    flex-shrink: 0;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+}
+
+.btn-link {
+    padding: 6px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+}
+
+.btn-link img {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0.6;
+}
+
+.btn-link:hover img {
+    transform: scale(1.15);
+    opacity: 1;
+}
+
+.text-danger.fs-5 {
+    color: #ef4444 !important;
+    line-height: 1;
+    padding: 0 4px;
+    font-weight: 700;
+    transition: transform 0.2s ease;
+    display: inline-block;
+}
+
+.text-danger.fs-5:hover {
+    transform: scale(1.3);
+}
+
+.input-group .form-control {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px !important;
+    padding: 12px 16px;
+    background-color: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.input-group .form-control:focus {
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.modal-content {
+    border: none !important;
+    border-radius: 24px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1) !important;
+    padding: 0.5rem;
+}
+
+.modal-header {
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 1rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #f1f5f9;
+    padding-top: 1rem;
+}
+
+.modal-body label {
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+}
+
+.modal-body .form-control, .modal-body .form-select {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.modal-body .form-control:focus, .modal-body .form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+#verTarefaUrgenciaBadge {
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+/* Estilos das Folhas (Samsung Notes style) */
+.paper-blank { background-color: #ffffff; }
+.paper-ruled { 
+    background-color: #ffffff;
+    background-image: repeating-linear-gradient(transparent, transparent 29px, #cbd5e1 29px, #cbd5e1 30px); 
+    background-attachment: local; 
+}
+.paper-grid { 
+    background-color: #ffffff;
+    background-image: linear-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(90deg, #cbd5e1 1px, transparent 1px); 
+    background-size: 25px 25px; 
+}
+.paper-dotted { 
+    background-color: #ffffff;
+    background-image: radial-gradient(#94a3b8 1.5px, transparent 1.5px); 
+    background-size: 25px 25px; 
+}
+
+#drawCanvas {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    cursor: crosshair;
+    touch-action: none; /* Impede o scroll ao desenhar no celular */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.nota-card {
+    border: 1px solid #e3e5e8;
+    border-radius: 8px;
+    padding: 10px;
+    background: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.nota-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }

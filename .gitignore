@@ -1,12 +1,12 @@
-# Ignorar pastas de compilação do C#
-**/bin/
-**/obj/
+# Pastas de build do .NET
+bin/
+obj/
 
-# Ignorar o arquivo de banco de dados local do SQLite
-**/todo.db
-**/todo.db-shm
-**/todo.db-wal
+# Base de dados SQLite local
+*.db
+*.db-shm
+*.db-wal
 
-# Ignorar dependências do Front-end (se houver)
-**/node_modules/
-.DS_Store
+# Pastas de IDE
+.vscode/
+.vs/
