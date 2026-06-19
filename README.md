@@ -49,4 +49,3 @@ Uma aplicação web completa para gestão de produtividade que combina um sistem
 1. Clona este repositório:
 ```bash
    git clone [https://github.com/teu-utilizador/nome-do-repositorio.git](https://github.com/teu-utilizador/nome-do-repositorio.git)
->>>>>>> cc5ad78 (docs: atualiza README na raiz do projeto)
