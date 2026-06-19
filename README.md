@@ -22,7 +22,6 @@ Uma aplicação web completa para gestão de produtividade que combina um sistem
 ### 📱 Interface e Experiência (UI/UX)
 * **Design Responsivo:** O layout adapta-se perfeitamente a telemóveis, tablets e computadores.
 * **Modo Escuro (Dark Mode) Nativo:** Interface inteligentemente adaptada para ambientes de pouca luz, garantindo alto contraste e legibilidade perfeita para textos secundários, prazos, checklists e ícones (com inversão dinâmica de cores).
->>>>>>> cc5ad78 (docs: atualiza README na raiz do projeto)
 * **Menu Lateral Retrátil:** Num telemóvel, o menu transforma-se numa "gaveta" oculta para maximizar o espaço de ecrã.
 * **Pesquisa em Tempo Real:** Encontra rapidamente tarefas pendentes ou concluídas.
 
