@@ -20,9 +20,6 @@ Uma aplicação web completa para gestão de produtividade que combina um sistem
 * **Visualização Ágil:** Visualiza as tuas notas através de uma galeria e navega pelas páginas sem precisar de as abrir para edição.
 
 ### 📱 Interface e Experiência (UI/UX)
-<<<<<<< HEAD
-* **Design Responsivo:** O layout adapta-se perfeitamente a telemóveis, tablets e computadores.
-=======
 * **Design Responsivo:** O layout adapta-se perfeitamente a telemóveis, tablets e computadores.
 * **Modo Escuro (Dark Mode) Nativo:** Interface inteligentemente adaptada para ambientes de pouca luz, garantindo alto contraste e legibilidade perfeita para textos secundários, prazos, checklists e ícones (com inversão dinâmica de cores).
 >>>>>>> cc5ad78 (docs: atualiza README na raiz do projeto)
@@ -51,10 +48,6 @@ Uma aplicação web completa para gestão de produtividade que combina um sistem
 
 ### Passos
 1. Clona este repositório:
-<<<<<<< HEAD
-   ```bash
-   git clone [https://github.com/teu-utilizador/nome-do-repositorio.git](https://github.com/teu-utilizador/nome-do-repositorio.git)
-=======
 ```bash
    git clone [https://github.com/teu-utilizador/nome-do-repositorio.git](https://github.com/teu-utilizador/nome-do-repositorio.git)
 >>>>>>> cc5ad78 (docs: atualiza README na raiz do projeto)
