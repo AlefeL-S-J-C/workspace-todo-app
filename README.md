@@ -10,6 +10,7 @@ Uma aplicação web completa para gestão de produtividade que combina um sistem
 * **Prazos Automáticos:** O sistema calcula automaticamente a data final com base no Grau de Urgência (Imediato, Muito Urgente, Urgente, Pouco Urgente, Não Urgente).
 * **Subtarefas (Checklists):** Adiciona passos menores dentro de uma tarefa principal e acompanha o progresso.
 * **Alertas Visuais:** As tarefas atrasadas ou a expirar no próprio dia piscam e recebem etiquetas de alerta automático.
+* **Efeito de Celebração:** Animação de confetes na tela ao concluir tarefas!
 
 ### 📝 Bloco de Notas Digital (Estilo Samsung Notes/Notion)
 * **Canvas Interativo:** Desenha e escreve à mão com suporte nativo a `PointerEvents` (ideal para ecrãs táteis e stylus/S-Pen).
@@ -19,7 +20,12 @@ Uma aplicação web completa para gestão de produtividade que combina um sistem
 * **Visualização Ágil:** Visualiza as tuas notas através de uma galeria e navega pelas páginas sem precisar de as abrir para edição.
 
 ### 📱 Interface e Experiência (UI/UX)
+<<<<<<< HEAD
 * **Design Responsivo:** O layout adapta-se perfeitamente a telemóveis, tablets e computadores.
+=======
+* **Design Responsivo:** O layout adapta-se perfeitamente a telemóveis, tablets e computadores.
+* **Modo Escuro (Dark Mode) Nativo:** Interface inteligentemente adaptada para ambientes de pouca luz, garantindo alto contraste e legibilidade perfeita para textos secundários, prazos, checklists e ícones (com inversão dinâmica de cores).
+>>>>>>> cc5ad78 (docs: atualiza README na raiz do projeto)
 * **Menu Lateral Retrátil:** Num telemóvel, o menu transforma-se numa "gaveta" oculta para maximizar o espaço de ecrã.
 * **Pesquisa em Tempo Real:** Encontra rapidamente tarefas pendentes ou concluídas.
 
@@ -29,6 +35,7 @@ Uma aplicação web completa para gestão de produtividade que combina um sistem
 * HTML5, CSS3, JavaScript (Vanilla)
 * [Bootstrap 5](https://getbootstrap.com/) (Componentes e Sistema de Grelha)
 * [SweetAlert2](https://sweetalert2.github.io/) (Pop-ups e Alertas bonitos)
+* [Canvas Confetti](https://github.com/catdad/canvas-confetti) (Animação de sucesso)
 * HTML `<canvas>` API
 
 **Backend:**
@@ -44,5 +51,10 @@ Uma aplicação web completa para gestão de produtividade que combina um sistem
 
 ### Passos
 1. Clona este repositório:
+<<<<<<< HEAD
    ```bash
    git clone [https://github.com/teu-utilizador/nome-do-repositorio.git](https://github.com/teu-utilizador/nome-do-repositorio.git)
+=======
+```bash
+   git clone [https://github.com/teu-utilizador/nome-do-repositorio.git](https://github.com/teu-utilizador/nome-do-repositorio.git)
+>>>>>>> cc5ad78 (docs: atualiza README na raiz do projeto)
