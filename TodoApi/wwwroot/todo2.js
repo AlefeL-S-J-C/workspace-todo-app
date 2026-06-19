@@ -1,7 +1,7 @@
 let tarefas = [];
 let termoPesquisa = "";
 let tarefaSelecionadaId = null;
-let paginaAtivaId = null; 
+let paginaAtivaId = null;
 
 const API_URL = "http://localhost:5152/tarefas";
 const API_URGENCIAS_URL = "http://localhost:5152/urgencias";
@@ -336,6 +336,10 @@ function renderizarTarefas() {
 
         card.className = `kanban-card d-flex flex-column gap-2 ${classeAlertaPrazo}`;
         card.style.borderLeft = `5px solid ${urgenciaDados.cor}`;
+        card.setAttribute("draggable", "true");
+        card.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", tarefa.id);
+        });
 
         const divHeader = document.createElement("div");
         divHeader.className = "d-flex align-items-start justify-content-between gap-1";
@@ -565,6 +569,9 @@ formModalEditarTarefa.addEventListener("submit", function (event) {
     const urgenciaAtualizada = Number(selectEditarUrgencia.value);
     const tagAtualizada = paginaAtivaId;
 
+    const tOriginal = tarefas.find(item => item.id === idParaEditar);
+    const mudouParaConcluido = (statusAtualizado === "Concluído" && (!tOriginal || tOriginal.status !== "Concluído"));
+
     const tarefaEditada = {
         id: idParaEditar,
         texto: textoAtualizado,
@@ -583,6 +590,9 @@ formModalEditarTarefa.addEventListener("submit", function (event) {
         body: JSON.stringify(tarefaEditada)
     }).then(() => {
         btnFecharModalEditar.click();
+        if (mudouParaConcluido && typeof confetti === "function") {
+            confetti();
+        }
         carregarTarefas();
     });
 });
@@ -904,6 +914,52 @@ function visualizarNota(titulo, arrayImagens, tipoFolha) {
         });
     }
     mostrarSweetAlert();
+}
+
+[colAFazer, colEmAndamento, colConcluido].forEach(col => {
+    col.addEventListener("dragover", (e) => {
+        e.preventDefault();
+    });
+    col.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const id = Number(e.dataTransfer.getData("text/plain"));
+        const t = tarefas.find(item => item.id === id);
+        if (!t) return;
+        let s = "A Fazer";
+        if (col === colEmAndamento) s = "Em Andamento";
+        if (col === colConcluido) s = "Concluído";
+        if (t.status === s) return;
+        const mudouParaConcluido = (s === "Concluído" && t.status !== "Concluído");
+        t.status = s;
+        t.concluida = (s === "Concluído");
+        fetch(`${API_URL}/${t.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(t)
+        }).then(() => {
+            if (mudouParaConcluido && typeof confetti === "function") {
+                confetti();
+            }
+            carregarTarefas();
+        });
+    });
+});
+
+const switchDarkMode = document.getElementById("switchDarkMode");
+if (switchDarkMode) {
+    if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark-mode");
+        switchDarkMode.checked = true;
+    }
+    switchDarkMode.addEventListener("change", () => {
+        if (switchDarkMode.checked) {
+            document.body.classList.add("dark-mode");
+            localStorage.setItem("theme", "dark");
+        } else {
+            document.body.classList.remove("dark-mode");
+            localStorage.setItem("theme", "light");
+        }
+    });
 }
 
 inicializarSistema();

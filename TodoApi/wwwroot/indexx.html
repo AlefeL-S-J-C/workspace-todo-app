@@ -1,243 +1,55 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>To-do padlet</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-    <link href="CSS/style.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow-x: hidden;
-            height: 100vh;
-        }
-        .main-wrapper {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-        }
-        .sidebar {
-            width: 240px;
-            background-color: #f1f2f4;
-            border-right: 1px solid #e3e5e8;
-            display: flex;
-            flex-direction: column;
-            padding: 1rem 0.5rem;
-            flex-shrink: 0;
-            transition: transform 0.3s ease;
-            z-index: 1030;
-        }
-        .sidebar-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #5c5f62;
-            text-transform: uppercase;
-            padding: 0 0.75rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .page-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.6rem 0.75rem;
-            border-radius: 4px;
-            cursor: pointer;
-            color: #37352f;
-            font-size: 0.95rem;
-            margin-bottom: 0.2rem;
-            transition: background 0.15s;
-        }
-        .page-item:hover {
-            background-color: #e3e5e8;
-        }
-        .page-item.active {
-            background-color: #e3e5e8;
-            font-weight: 600;
-        }
-        .content-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            width: 100%;
-        }
-        .kanban-container {
-            display: flex;
-            gap: 1.25rem;
-            align-items: flex-start;
-            overflow-x: auto;
-            padding: 1rem;
-            flex: 1;
-            -webkit-overflow-scrolling: touch;
-        }
-        .kanban-column {
-            flex: 1;
-            min-width: 280px;
-            max-width: 100%;
-            background-color: #f7f8f9;
-            border-radius: 8px;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            max-height: 100%;
-        }
-        .status-badge {
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .badge-todo { background-color: #ffe2dd; color: #5d1715; }
-        .badge-doing { background-color: #e2f5ff; color: #153c5d; }
-        .badge-done { background-color: #e2f6ed; color: #1c5235; }
-        .kanban-cards {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            min-height: 100px;
-            overflow-y: auto;
-            padding-top: 0.5rem;
-        }
-        .kanban-card {
-            background: white;
-            border-radius: 6px;
-            padding: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
-        }
-        .concluida {
-            text-decoration: line-through;
-            color: #6c757d;
-        }
-        .extra-small {
-            font-size: 0.75rem;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        .animate-pulse {
-            animation: pulse 2s infinite ease-in-out;
-        }
-        .paper-blank { background-color: #ffffff; }
-        .paper-ruled { 
-            background-color: #ffffff;
-            background-image: repeating-linear-gradient(transparent, transparent 29px, #cbd5e1 29px, #cbd5e1 30px); 
-            background-attachment: local; 
-        }
-        .paper-grid { 
-            background-color: #ffffff;
-            background-image: linear-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(90deg, #cbd5e1 1px, transparent 1px); 
-            background-size: 25px 25px; 
-        }
-        .paper-dotted { 
-            background-color: #ffffff;
-            background-image: radial-gradient(#94a3b8 1.5px, transparent 1.5px); 
-            background-size: 25px 25px; 
-        }
-        .canvas-wrapper {
-            width: 100%;
-            overflow: auto;
-            display: flex;
-            justify-content: center;
-            background: #e3e5e8;
-            padding: 10px;
-            border-radius: 8px;
-        }
-        #drawCanvas {
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            cursor: crosshair;
-            touch-action: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            background-color: #ffffff;
-        }
-        .nota-card {
-            border: 1px solid #e3e5e8;
-            border-radius: 8px;
-            padding: 10px;
-            background: white;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .nota-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0,0,0,0.4);
-            z-index: 1025;
-        }
-        @media (max-width: 991.98px) {
-            .sidebar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 100vh;
-                transform: translateX(-100%);
-            }
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            .sidebar.show + .sidebar-overlay {
-                display: block;
-            }
-            .kanban-container {
-                flex-direction: column;
-                overflow-y: auto;
-            }
-            .kanban-column {
-                max-height: none;
-            }
-        }
-    </style>
+    <link href="content/CSS/style.css" rel="stylesheet">
 </head>
-<body>
 
+<body>
     <div class="main-wrapper">
         <div class="sidebar" id="sidebarMenu">
             <div class="px-2 mb-4 d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold m-0">🚀 Workspace</h5>
+                <h5 class="fw-bold m-0" style="color: var(--text-main, #000);">🚀 Workspace</h5>
                 <button class="btn btn-sm btn-light d-lg-none" id="btnFecharSidebarMenu">&times;</button>
             </div>
             <div class="sidebar-title">
                 <span>Minhas Páginas</span>
-                <button class="btn btn-sm p-0 text-dark fw-bold" id="btnCriarPagina">+</button>
+                <button class="btn btn-sm p-0 text-dark fw-bold" id="btnCriarPagina" style="color: var(--text-main, #000) !important;">+</button>
             </div>
             <div id="listaPaginas" class="px-1 flex-grow-1 overflow-y-auto"></div>
+
+            <div class="px-3 mt-auto mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="switchDarkMode">
+                    <label class="form-check-label text-muted small fw-bold" for="switchDarkMode">🌙 Modo Escuro</label>
+                </div>
+            </div>
         </div>
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <div class="content-area">
-            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-3 py-2">
-                <div class="container-fluid p-0 d-flex justify-content-between align-items-center gap-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <button class="btn btn-outline-dark btn-sm d-lg-none" id="btnAlternarSidebar">☰</button>
-                        <h5 class="fw-bold m-0 text-dark text-truncate" id="tituloPaginaAtiva" style="max-width: 150px;">Selecione uma página</h5>
-                    </div>
-                    <div class="d-flex gap-1 align-items-center flex-wrap justify-content-end">
-                        <input type="text" id="inputPesquisa" class="form-control form-control-sm" placeholder="Pesquisar..." style="width: 120px;">
-                        <button class="btn btn-warning btn-sm fw-bold text-nowrap" id="btnAbrirGaleriaNotas" data-bs-toggle="modal" data-bs-target="#modalGaleriaNotas">📝 Notas</button>
-                        <button class="btn btn-primary btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#modalCriarTarefa" id="btnAbrirModalCriar">+ Add</button>
-                        <button id="btnLimparTodas" class="btn btn-outline-danger btn-sm p-1">&times;</button>
-                    </div>
+            
+            <div class="d-flex justify-content-between align-items-center border-bottom px-3 py-2 w-100" style="background-color: var(--bg-card, white);">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-dark btn-sm d-lg-none" id="btnAlternarSidebar">☰</button>
+                    <h5 class="fw-bold m-0 text-truncate" id="tituloPaginaAtiva" style="max-width: 150px; color: var(--text-main, #000);">Selecione uma página</h5>
                 </div>
-            </nav>
+                
+                <div class="d-flex justify-content-end align-items-center gap-2 flex-nowrap ms-auto" style="overflow-x: auto; padding-bottom: 2px;">
+                    <input type="text" id="inputPesquisa" class="form-control form-control-sm flex-shrink-0" placeholder="Pesquisar..." style="width: 150px;">
+                    <button class="btn btn-warning btn-sm fw-bold text-nowrap flex-shrink-0 d-flex align-items-center gap-1" id="btnAbrirGaleriaNotas" data-bs-toggle="modal" data-bs-target="#modalGaleriaNotas">📝 Notas</button>
+                    <button class="btn btn-primary btn-sm fw-bold text-nowrap flex-shrink-0 d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalCriarTarefa" id="btnAbrirModalCriar">+ Add</button>
+                    <button id="btnLimparTodas" class="btn btn-outline-danger btn-sm flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 50% !important;">&times;</button>
+                </div>
+            </div>
 
             <div class="px-3 pt-2">
-                <span id="contadorTarefas" class="badge bg-secondary extra-small">0 tarefas pendentes</span>
+                <span id="contadorTarefas" class="badge">0 tarefas pendentes</span>
             </div>
 
             <div class="kanban-container">
@@ -372,14 +184,14 @@
                     <div class="d-flex gap-2 flex-wrap">
                         <span class="badge" id="verTarefaUrgenciaBadge"></span>
                     </div>
-                    <div class="bg-light p-3 rounded">
+                    <div class="bg-light p-3 rounded" style="background-color: var(--bg-hover) !important;">
                         <small class="text-muted d-block">Prazos e Cronograma:</small>
                         <span class="small d-block"><b>Início:</b> <span id="verTarefaDataInicio"></span></span>
                         <span class="small d-block"><b>Prazo Final:</b> <span id="verTarefaDataFim"></span></span>
                     </div>
                     <div>
                         <h6 class="fw-bold">Descrição</h6>
-                        <p id="verTarefaDescricao" class="text-muted small bg-light p-2 rounded"></p>
+                        <p id="verTarefaDescricao" class="text-muted small bg-light p-2 rounded" style="background-color: var(--bg-hover) !important;"></p>
                     </div>
                     <hr>
                     <div>
@@ -438,7 +250,7 @@
                         <button class="btn btn-sm btn-outline-secondary py-1" id="btnBorracha">Borracha</button>
                         <button class="btn btn-sm btn-outline-danger py-1" id="btnLimparCanvas">Limpar</button>
                     </div>
-                    
+
                     <div class="d-flex gap-2 mb-2 w-100 justify-content-center align-items-center flex-wrap">
                         <button class="btn btn-sm btn-dark fw-bold px-2" id="btnPaginaAnterior">&lt; Ant</button>
                         <span class="badge bg-secondary" id="lblPaginaAtual">Página 1 de 1</span>
@@ -460,6 +272,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="todo2.js"></script>
 </body>
 </html>
