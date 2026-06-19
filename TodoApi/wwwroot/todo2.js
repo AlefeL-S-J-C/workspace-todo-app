@@ -65,12 +65,21 @@ const btnSalvarNota = document.getElementById("btnSalvarNota");
 const btnAbrirGaleriaNotas = document.getElementById("btnAbrirGaleriaNotas");
 const btnNovaNota = document.getElementById('btnNovaNota');
 
+const canvasWrapper = document.getElementById("canvasWrapper");
 const canvas = document.getElementById("drawCanvas");
 const ctx = canvas?.getContext("2d");
 const corCaneta = document.getElementById("corCaneta");
+const selectTextoFonte = document.getElementById("selectTextoFonte");
+const selectTextoTamanho = document.getElementById("selectTextoTamanho");
 const espessuraCaneta = document.getElementById("espessuraCaneta");
+const btnCaneta = document.getElementById("btnCaneta");
+const btnMarcaTexto = document.getElementById("btnMarcaTexto");
+const btnTexto = document.getElementById("btnTexto");
 const btnBorracha = document.getElementById("btnBorracha");
+const btnUndo = document.getElementById("btnUndo");
+const btnRedo = document.getElementById("btnRedo");
 const btnLimparCanvas = document.getElementById("btnLimparCanvas");
+const btnExportarNota = document.getElementById("btnExportarNota");
 
 const btnPaginaAnterior = document.getElementById("btnPaginaAnterior");
 const btnProximaPagina = document.getElementById("btnProximaPagina");
@@ -83,7 +92,9 @@ const sidebarMenu = document.getElementById("sidebarMenu");
 const sidebarOverlay = document.getElementById("sidebarOverlay");
 
 let isDrawing = false;
-let isEraser = false;
+let currentTool = "pen";
+let undoStack = [];
+let redoStack = [];
 
 const swalWithBootstrapButtons = Swal.mixin({
     customClass: { confirmButton: "btn btn-success ms-2", cancelButton: "btn btn-danger" },
@@ -92,6 +103,7 @@ const swalWithBootstrapButtons = Swal.mixin({
 
 const hojeCompleto = new Date();
 const dataMinimaFormatada = hojeCompleto.toISOString().split('T')[0];
+
 if (inputDataInicioModal) inputDataInicioModal.min = dataMinimaFormatada;
 if (inputEditarDataInicio) inputEditarDataInicio.min = dataMinimaFormatada;
 
@@ -100,6 +112,7 @@ function alternarMenuMovel() {
         sidebarMenu.classList.toggle("show");
     }
 }
+
 if (btnAlternarSidebar) btnAlternarSidebar.addEventListener("click", alternarMenuMovel);
 if (btnFecharSidebarMenu) btnFecharSidebarMenu.addEventListener("click", alternarMenuMovel);
 if (sidebarOverlay) sidebarOverlay.addEventListener("click", alternarMenuMovel);
@@ -125,6 +138,7 @@ function inicializarSistema() {
 }
 
 function atualizarCorSelect(selectElement) {
+    if (!selectElement) return;
     const selecionado = arrUrgencia.find(u => u.id == selectElement.value);
     if (selecionado) {
         selectElement.style.backgroundColor = selecionado.cor;
@@ -136,15 +150,15 @@ function atualizarCorSelect(selectElement) {
 }
 
 function renderizarUrgencias() {
-    selectUrgenciaModal.innerHTML = "";
-    selectEditarUrgencia.innerHTML = "";
+    if (selectUrgenciaModal) selectUrgenciaModal.innerHTML = "";
+    if (selectEditarUrgencia) selectEditarUrgencia.innerHTML = "";
 
     const optDefault = document.createElement("option");
     optDefault.value = "";
     optDefault.disabled = true;
     optDefault.selected = true;
     optDefault.textContent = "Selecione a urgência...";
-    selectUrgenciaModal.appendChild(optDefault);
+    if (selectUrgenciaModal) selectUrgenciaModal.appendChild(optDefault);
 
     arrUrgencia.forEach(urg => {
         const textoComPrazo = `${urg.descricao} - ${urg.prazo}`;
@@ -154,18 +168,20 @@ function renderizarUrgencias() {
         optNova.textContent = textoComPrazo;
         optNova.style.backgroundColor = urg.cor;
         optNova.style.color = "#ffffff";
-        selectUrgenciaModal.appendChild(optNova);
+        if (selectUrgenciaModal) selectUrgenciaModal.appendChild(optNova);
 
         const optEditar = document.createElement("option");
         optEditar.value = urg.id;
         optEditar.textContent = textoComPrazo;
         optEditar.style.backgroundColor = urg.cor;
         optEditar.style.color = "#ffffff";
-        selectEditarUrgencia.appendChild(optEditar);
+        if (selectEditarUrgencia) selectEditarUrgencia.appendChild(optEditar);
     });
 }
 
 function calcularPrazoAutomatico(selectElement, inputInicio, inputFim) {
+    if (!selectElement || !inputInicio || !inputFim) return;
+    
     let dataInicioStr = inputInicio.value;
     const urgencyId = selectElement.value;
 
@@ -204,40 +220,54 @@ function calcularPrazoAutomatico(selectElement, inputInicio, inputFim) {
     inputFim.value = `${ano}-${mes}-${dia}T${hora}:${minuto}`;
 }
 
-selectUrgenciaModal.addEventListener("change", function() {
-    atualizarCorSelect(this);
-    calcularPrazoAutomatico(this, inputDataInicioModal, inputDataFimModal);
-});
-inputDataInicioModal.addEventListener("change", () => {
-    calcularPrazoAutomatico(selectUrgenciaModal, inputDataInicioModal, inputDataFimModal);
-});
+if (selectUrgenciaModal) {
+    selectUrgenciaModal.addEventListener("change", function() {
+        atualizarCorSelect(this);
+        calcularPrazoAutomatico(this, inputDataInicioModal, inputDataFimModal);
+    });
+}
 
-selectEditarUrgencia.addEventListener("change", function() {
-    atualizarCorSelect(this);
-    calcularPrazoAutomatico(this, inputEditarDataInicio, inputEditarDataFim);
-});
-inputEditarDataInicio.addEventListener("change", () => {
-    calcularPrazoAutomatico(selectEditarUrgencia, inputEditarDataInicio, inputEditarDataFim);
-});
+if (inputDataInicioModal) {
+    inputDataInicioModal.addEventListener("change", () => {
+        calcularPrazoAutomatico(selectUrgenciaModal, inputDataInicioModal, inputDataFimModal);
+    });
+}
+
+if (selectEditarUrgencia) {
+    selectEditarUrgencia.addEventListener("change", function() {
+        atualizarCorSelect(this);
+        calcularPrazoAutomatico(this, inputEditarDataInicio, inputEditarDataFim);
+    });
+}
+
+if (inputEditarDataInicio) {
+    inputEditarDataInicio.addEventListener("change", () => {
+        calcularPrazoAutomatico(selectEditarUrgencia, inputEditarDataInicio, inputEditarDataFim);
+    });
+}
 
 function renderizarMenuLateral() {
+    if (!listaPaginas) return;
     listaPaginas.innerHTML = "";
     if (arrTags.length === 0) {
         listaPaginas.innerHTML = `<small class="text-muted d-block text-center py-3">Nenhuma página criada.</small>`;
-        tituloPaginaAtiva.textContent = "Crie uma página";
-        btnAbrirModalCriar.disabled = true;
+        if (tituloPaginaAtiva) tituloPaginaAtiva.textContent = "Crie uma página";
+        if (btnAbrirModalCriar) btnAbrirModalCriar.disabled = true;
         return;
     }
-    btnAbrirModalCriar.disabled = false;
+    if (btnAbrirModalCriar) btnAbrirModalCriar.disabled = false;
+    
     arrTags.forEach(tag => {
         const item = document.createElement("div");
         item.className = `page-item ${tag.id === paginaAtivaId ? 'active' : ''}`;
         const spanNome = document.createElement("span");
         spanNome.textContent = `📄 ${tag.nome}`;
         item.appendChild(spanNome);
-        if (tag.id === paginaAtivaId) {
+        
+        if (tag.id === paginaAtivaId && tituloPaginaAtiva) {
             tituloPaginaAtiva.textContent = tag.nome;
         }
+        
         item.addEventListener("click", () => {
             paginaAtivaId = tag.id;
             if (sidebarMenu && sidebarMenu.classList.contains("show")) {
@@ -250,32 +280,34 @@ function renderizarMenuLateral() {
     });
 }
 
-btnCriarPagina.addEventListener("click", () => {
-    Swal.fire({
-        title: 'Nova Página',
-        input: 'text',
-        inputPlaceholder: 'Digite o nome da página (Ex: Faculdade)',
-        showCancelButton: true,
-        confirmButtonText: 'Criar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed && result.value.trim() !== "") {
-            const coresAleatorias = ["#686b6e", "#2471a3", "#229954", "#ca6f1e", "#ba4a00", "#7d3c98"];
-            const novaTag = {
-                nome: result.value.trim(),
-                cor: coresAleatorias[Math.floor(Math.random() * coresAleatorias.length)]
-            };
-            fetch(API_TAGS_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(novaTag)
-            }).then(() => {
-                paginaAtivaId = null;
-                inicializarSistema();
-            });
-        }
+if (btnCriarPagina) {
+    btnCriarPagina.addEventListener("click", () => {
+        Swal.fire({
+            title: 'Nova Página',
+            input: 'text',
+            inputPlaceholder: 'Digite o nome da página (Ex: Faculdade)',
+            showCancelButton: true,
+            confirmButtonText: 'Criar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed && result.value.trim() !== "") {
+                const coresAleatorias = ["#686b6e", "#2471a3", "#229954", "#ca6f1e", "#ba4a00", "#7d3c98"];
+                const novaTag = {
+                    nome: result.value.trim(),
+                    cor: coresAleatorias[Math.floor(Math.random() * coresAleatorias.length)]
+                };
+                fetch(API_TAGS_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(novaTag)
+                }).then(() => {
+                    paginaAtivaId = null;
+                    inicializarSistema();
+                });
+            }
+        });
     });
-});
+}
 
 function carregarTarefas() {
     fetch(API_URL)
@@ -284,9 +316,9 @@ function carregarTarefas() {
             tarefas = dados;
             renderizarTarefas();
             if (tarefaSelecionadaId !== null) {
-                const atualizada = tarefas.find(t => t.id === tarefaSelecionadaId);
-                if (atualizada) {
-                    renderizarSubtarefas(atualizada.subtarefas);
+                const updated = tarefas.find(t => t.id === tarefaSelecionadaId);
+                if (updated) {
+                    renderizarSubtarefas(updated.subtarefas);
                 }
             }
         })
@@ -303,6 +335,8 @@ function formatarDataBR(dataString, incluirHora = false) {
 }
 
 function renderizarTarefas() {
+    if (!colAFazer || !colEmAndamento || !colConcluido) return;
+    
     colAFazer.innerHTML = "";
     colEmAndamento.innerHTML = "";
     colConcluido.innerHTML = "";
@@ -360,12 +394,14 @@ function renderizarTarefas() {
         btnVer.addEventListener("click", (e) => {
             e.stopPropagation();
             tarefaSelecionadaId = tarefa.id;
-            verTarefaTitulo.textContent = tarefa.texto;
-            verTarefaDataInicio.textContent = formatarDataBR(tarefa.dataInicio);
-            verTarefaDataFim.textContent = formatarDataBR(tarefa.dataFim, true);
-            verTarefaDescricao.textContent = tarefa.descricao || "Sem descrição.";
-            verTarefaUrgenciaBadge.textContent = urgenciaDados.descricao;
-            verTarefaUrgenciaBadge.style.backgroundColor = urgenciaDados.cor;
+            if (verTarefaTitulo) verTarefaTitulo.textContent = tarefa.texto;
+            if (verTarefaDataInicio) verTarefaDataInicio.textContent = formatarDataBR(tarefa.dataInicio);
+            if (verTarefaDataFim) verTarefaDataFim.textContent = formatarDataBR(tarefa.dataFim, true);
+            if (verTarefaDescricao) verTarefaDescricao.textContent = tarefa.descricao || "Sem descrição.";
+            if (verTarefaUrgenciaBadge) {
+                verTarefaUrgenciaBadge.textContent = urgenciaDados.descricao;
+                verTarefaUrgenciaBadge.style.backgroundColor = urgenciaDados.cor;
+            }
             renderizarSubtarefas(tarefa.subtarefas);
         });
 
@@ -376,14 +412,16 @@ function renderizarTarefas() {
         btnEditar.setAttribute("data-bs-target", "#modalEditarTarefa");
         btnEditar.addEventListener("click", (e) => {
             e.stopPropagation();
-            inputEditarId.value = tarefa.id;
-            inputEditarTitulo.value = tarefa.texto;
-            selectEditarStatus.value = tarefa.status || "A Fazer";
-            inputEditarDataInicio.value = tarefa.dataInicio;
-            inputEditarDataFim.value = tarefa.dataFim;
-            inputEditarDescricao.value = tarefa.descricao || "";
-            selectEditarUrgencia.value = tarefa.urgenciaId;
-            atualizarCorSelect(selectEditarUrgencia);
+            if (inputEditarId) inputEditarId.value = tarefa.id;
+            if (inputEditarTitulo) inputEditarTitulo.value = tarefa.texto;
+            if (selectEditarStatus) selectEditarStatus.value = tarefa.status || "A Fazer";
+            if (inputEditarDataInicio) inputEditarDataInicio.value = tarefa.dataInicio;
+            if (inputEditarDataFim) inputEditarDataFim.value = tarefa.dataFim;
+            if (inputEditarDescricao) inputEditarDescricao.value = tarefa.descricao || "";
+            if (selectEditarUrgencia) {
+                selectEditarUrgencia.value = tarefa.urgenciaId;
+                atualizarCorSelect(selectEditarUrgencia);
+            }
         });
 
         const btnDeletar = document.createElement("button");
@@ -448,15 +486,16 @@ function renderizarTarefas() {
         }
     });
 
-    countAFazer.textContent = cAFazer;
-    countEmAndamento.textContent = cEmAndamento;
-    countConcluido.textContent = cConcluido;
+    if (countAFazer) countAFazer.textContent = cAFazer;
+    if (countEmAndamento) countEmAndamento.textContent = cEmAndamento;
+    if (countConcluido) countConcluido.textContent = cConcluido;
 
     const pendentesTotais = cAFazer + cEmAndamento;
-    contadorTarefas.textContent = `${pendentesTotais} ${pendentesTotais === 1 ? 'tarefa pendente' : 'tarefas pendentes'}`;
+    if (contadorTarefas) contadorTarefas.textContent = `${pendentesTotais} ${pendentesTotais === 1 ? 'tarefa pendente' : 'tarefas pendentes'}`;
 }
 
 function renderizarSubtarefas(lista) {
+    if (!listaSubtarefas) return;
     listaSubtarefas.innerHTML = "";
     if (!lista || lista.length === 0) {
         listaSubtarefas.innerHTML = `<li class="list-group-item text-center text-muted py-2 small">Nenhuma subtarefa adicionada.</li>`;
@@ -502,114 +541,124 @@ function renderizarSubtarefas(lista) {
     });
 }
 
-inputPesquisa.addEventListener("input", function () {
-    termoPesquisa = this.value.trim();
-    renderizarTarefas();
-});
-
-formNovaSubtarefa.addEventListener("submit", function (e) {
-    e.preventDefault();
-    const texto = inputTextoSubtarefa.value.trim();
-    if (!texto || !tarefaSelecionadaId) return;
-
-    const novaSub = { texto: texto, concluida: false, tarefaId: tarefaSelecionadaId };
-    fetch(API_SUBTAREFAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(novaSub)
-    }).then(() => {
-        inputTextoSubtarefa.value = "";
-        carregarTarefas();
+if (inputPesquisa) {
+    inputPesquisa.addEventListener("input", function () {
+        termoPesquisa = this.value.trim();
+        renderizarTarefas();
     });
-});
+}
 
-formModalTarefa.addEventListener("submit", function (event) {
-    event.preventDefault();
-    const texto = inputTituloModal.value.trim();
-    const dataInicio = inputDataInicioModal.value;
-    const dataFim = inputDataFimModal.value;
-    const genericDescricao = inputDescricaoModal.value.trim();
-    const urgenciaId = Number(selectUrgenciaModal.value);
-    const tagId = paginaAtivaId;
+if (formNovaSubtarefa) {
+    formNovaSubtarefa.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const texto = inputTextoSubtarefa.value.trim();
+        if (!texto || !tarefaSelecionadaId) return;
 
-    if (texto === "" || !dataInicio || !dataFim || !urgenciaId || !tagId) return;
-
-    const novaTarefa = {
-        texto: texto,
-        concluida: false,
-        status: "A Fazer",
-        dataInicio: dataInicio,
-        dataFim: dataFim,
-        descricao: genericDescricao,
-        urgenciaId: urgenciaId,
-        tagId: tagId
-    };
-
-    fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(novaTarefa)
-    }).then(() => {
-        btnFecharModal.click();
-        formModalTarefa.reset();
-        selectUrgenciaModal.style.backgroundColor = "";
-        selectUrgenciaModal.style.color = "";
-        carregarTarefas();
+        const novaSub = { texto: texto, concluida: false, tarefaId: tarefaSelecionadaId };
+        fetch(API_SUBTAREFAS_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(novaSub)
+        }).then(() => {
+            inputTextoSubtarefa.value = "";
+            carregarTarefas();
+        });
     });
-});
+}
 
-formModalEditarTarefa.addEventListener("submit", function (event) {
-    event.preventDefault();
-    const idParaEditar = Number(inputEditarId.value);
-    const textoAtualizado = inputEditarTitulo.value.trim();
-    const statusAtualizado = selectEditarStatus.value;
-    const dataInicioAtualizada = inputEditarDataInicio.value;
-    const dataFimAtualizada = inputEditarDataFim.value;
-    const descricaoAtualizada = inputEditarDescricao.value.trim();
-    const urgenciaAtualizada = Number(selectEditarUrgencia.value);
-    const tagAtualizada = paginaAtivaId;
+if (formModalTarefa) {
+    formModalTarefa.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const texto = inputTituloModal.value.trim();
+        const dataInicio = inputDataInicioModal.value;
+        const dataFim = inputDataFimModal.value;
+        const genericDescricao = inputDescricaoModal.value.trim();
+        const urgenciaId = Number(selectUrgenciaModal.value);
+        const tagId = paginaAtivaId;
 
-    const tOriginal = tarefas.find(item => item.id === idParaEditar);
-    const mudouParaConcluido = (statusAtualizado === "Concluído" && (!tOriginal || tOriginal.status !== "Concluído"));
+        if (texto === "" || !dataInicio || !dataFim || !urgenciaId || !tagId) return;
 
-    const tarefaEditada = {
-        id: idParaEditar,
-        texto: textoAtualizado,
-        status: statusAtualizado,
-        concluida: statusAtualizado === "Concluído",
-        dataInicio: dataInicioAtualizada,
-        dataFim: dataFimAtualizada,
-        descricao: descricaoAtualizada,
-        urgenciaId: urgenciaAtualizada,
-        tagId: tagAtualizada
-    };
+        const novaTarefa = {
+            texto: texto,
+            concluida: false,
+            status: "A Fazer",
+            dataInicio: dataInicio,
+            dataFim: dataFim,
+            descricao: genericDescricao,
+            urgenciaId: urgenciaId,
+            tagId: tagId
+        };
 
-    fetch(`${API_URL}/${idParaEditar}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tarefaEditada)
-    }).then(() => {
-        btnFecharModalEditar.click();
-        if (mudouParaConcluido && typeof confetti === "function") {
-            confetti();
-        }
-        carregarTarefas();
+        fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(novaTarefa)
+        }).then(() => {
+            btnFecharModal.click();
+            formModalTarefa.reset();
+            selectUrgenciaModal.style.backgroundColor = "";
+            selectUrgenciaModal.style.color = "";
+            carregarTarefas();
+        });
     });
-});
+}
 
-btnLimparTodas.addEventListener("click", () => {
-    swalWithBootstrapButtons.fire({
-        title: "Apagar todas as tarefas desta página?",
-        icon: "warning",
-        showCancelButton: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const tarefasDaPagina = tarefas.filter(t => t.tagId === paginaAtivaId);
-            const promessas = tarefasDaPagina.map(t => fetch(`${API_URL}/${t.id}`, { method: "DELETE" }));
-            Promise.all(promessas).then(() => carregarTarefas());
-        }
+if (formModalEditarTarefa) {
+    formModalEditarTarefa.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const idParaEditar = Number(inputEditarId.value);
+        const textoAtualizado = inputEditarTitulo.value.trim();
+        const statusAtualizado = selectEditarStatus.value;
+        const dataInicioAtualizada = inputEditarDataInicio.value;
+        const dataFimAtualizada = inputEditarDataFim.value;
+        const descricaoAtualizada = inputEditarDescricao.value.trim();
+        const urgenciaAtualizada = Number(selectEditarUrgencia.value);
+        const tagAtualizada = paginaAtivaId;
+
+        const tOriginal = tarefas.find(item => item.id === idParaEditar);
+        const mudouParaConcluido = (statusAtualizado === "Concluído" && (!tOriginal || tOriginal.status !== "Concluído"));
+
+        const tarefaEditada = {
+            id: idParaEditar,
+            texto: textoAtualizado,
+            status: statusAtualizado,
+            concluida: statusAtualizado === "Concluído",
+            dataInicio: dataInicioAtualizada,
+            dataFim: dataFimAtualizada,
+            descricao: descricaoAtualizada,
+            urgenciaId: urgenciaAtualizada,
+            tagId: tagAtualizada
+        };
+
+        fetch(`${API_URL}/${idParaEditar}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(tarefaEditada)
+        }).then(() => {
+            btnFecharModalEditar.click();
+            if (mudouParaConcluido && typeof confetti === "function") {
+                confetti();
+            }
+            carregarTarefas();
+        });
     });
-});
+}
+
+if (btnLimparTodas) {
+    btnLimparTodas.addEventListener("click", () => {
+        swalWithBootstrapButtons.fire({
+            title: "Apagar todas as tarefas desta página?",
+            icon: "warning",
+            showCancelButton: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const tarefasDaPagina = tarefas.filter(t => t.tagId === paginaAtivaId);
+                const promessas = tarefasDaPagina.map(t => fetch(`${API_URL}/${t.id}`, { method: "DELETE" }));
+                Promise.all(promessas).then(() => carregarTarefas());
+            }
+        });
+    });
+}
 
 const modalVerTarefaEl = document.getElementById('modalVerTarefa');
 if (modalVerTarefaEl) {
@@ -629,25 +678,165 @@ if (modalGaleriaNotas) {
 
 if (selectTipoFolha) {
     selectTipoFolha.addEventListener('change', (e) => {
-        canvas.className = e.target.value;
+        if (canvas) canvas.className = e.target.value;
     });
 }
 
 if (btnLimparCanvas) {
     btnLimparCanvas.addEventListener('click', () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (ctx && canvas) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.querySelectorAll('.canvas-floating-text').forEach(e => e.remove());
+            salvarEstadoCanvas();
+        }
     });
 }
 
-if (btnBorracha) {
-    btnBorracha.addEventListener('click', () => {
-        isEraser = !isEraser;
-        btnBorracha.classList.toggle('btn-secondary');
-        btnBorracha.classList.toggle('btn-outline-secondary');
+function alternarFerramenta(ferramenta) {
+    currentTool = ferramenta;
+    if (btnCaneta) {
+        btnCaneta.classList.toggle("btn-dark", ferramenta === "pen");
+        btnCaneta.classList.toggle("btn-outline-secondary", ferramenta !== "pen");
+    }
+    if (btnMarcaTexto) {
+        btnMarcaTexto.classList.toggle("btn-dark", ferramenta === "highlighter");
+        btnMarcaTexto.classList.toggle("btn-outline-secondary", ferramenta !== "highlighter");
+    }
+    if (btnTexto) {
+        btnTexto.classList.toggle("btn-dark", ferramenta === "text");
+        btnTexto.classList.toggle("btn-outline-secondary", ferramenta !== "text");
+    }
+    if (btnBorracha) {
+        btnBorracha.classList.toggle("btn-dark", ferramenta === "eraser");
+        btnBorracha.classList.toggle("btn-outline-secondary", ferramenta !== "eraser");
+    }
+}
+
+if (btnCaneta) btnCaneta.addEventListener("click", () => alternarFerramenta("pen"));
+if (btnMarcaTexto) btnMarcaTexto.addEventListener("click", () => alternarFerramenta("highlighter"));
+if (btnTexto) btnTexto.addEventListener("click", () => alternarFerramenta("text"));
+if (btnBorracha) btnBorracha.addEventListener("click", () => alternarFerramenta("eraser"));
+
+function hexParaRgba(hex, opacidade) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacidade})`;
+}
+
+function salvarEstadoCanvas() {
+    if (canvas) {
+        undoStack.push(canvas.toDataURL());
+        redoStack = [];
+    }
+}
+
+function desfazerAcao() {
+    if (undoStack.length > 1 && ctx && canvas) {
+        redoStack.push(undoStack.pop());
+        const estadoAnterior = undoStack[undoStack.length - 1];
+        const img = new Image();
+        img.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = "source-over";
+            ctx.drawImage(img, 0, 0);
+        };
+        img.src = estadoAnterior;
+    }
+}
+
+function refazerAcao() {
+    if (redoStack.length > 0 && ctx && canvas) {
+        const proximoEstado = redoStack.pop();
+        undoStack.push(proximoEstado);
+        const img = new Image();
+        img.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = "source-over";
+            ctx.drawImage(img, 0, 0);
+        };
+        img.src = proximoEstado;
+    }
+}
+
+if (btnUndo) btnUndo.addEventListener("click", desfazerAcao);
+if (btnRedo) btnRedo.addEventListener("click", refazerAcao);
+
+window.addEventListener("keydown", (e) => {
+    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA" || document.activeElement.getAttribute("contenteditable") === "true") return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        desfazerAcao();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        refazerAcao();
+    }
+});
+
+if (btnExportarNota) {
+    btnExportarNota.addEventListener("click", () => {
+        if (!canvas) return;
+        
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tCtx = tempCanvas.getContext("2d");
+        
+        tCtx.fillStyle = '#ffffff';
+        tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+        const tipo = selectTipoFolha ? selectTipoFolha.value : "paper-blank";
+        if (tipo === "paper-ruled") {
+            tCtx.strokeStyle = "#cbd5e1";
+            tCtx.lineWidth = 1;
+            for(let y = 29; y < tempCanvas.height; y += 30) {
+                tCtx.beginPath(); tCtx.moveTo(0, y); tCtx.lineTo(tempCanvas.width, y); tCtx.stroke();
+            }
+        } else if (tipo === "paper-grid") {
+            tCtx.strokeStyle = "#cbd5e1";
+            tCtx.lineWidth = 1;
+            for(let x = 25; x < tempCanvas.width; x += 25) {
+                tCtx.beginPath(); tCtx.moveTo(x, 0); tCtx.lineTo(x, tempCanvas.height); tCtx.stroke();
+            }
+            for(let y = 25; y < tempCanvas.height; y += 25) {
+                tCtx.beginPath(); tCtx.moveTo(0, y); tCtx.lineTo(tempCanvas.width, y); tCtx.stroke();
+            }
+        } else if (tipo === "paper-dotted") {
+            tCtx.fillStyle = "#94a3b8";
+            for(let x = 25; x < tempCanvas.width; x += 25) {
+                for(let y = 25; y < tempCanvas.height; y += 25) {
+                    tCtx.beginPath(); tCtx.arc(x, y, 1.5, 0, Math.PI*2); tCtx.fill();
+                }
+            }
+        }
+
+        tCtx.drawImage(canvas, 0, 0);
+
+        document.querySelectorAll('.canvas-floating-text').forEach(el => {
+            tCtx.font = `${el.style.fontSize} ${el.style.fontFamily}`;
+            tCtx.fillStyle = el.style.color;
+            tCtx.textBaseline = "top";
+            
+            const left = parseFloat(el.style.left) || 0;
+            const top = parseFloat(el.style.top) || 0;
+            
+            const linhas = el.innerText.split('\n');
+            let curY = top + 2; 
+            linhas.forEach(linha => {
+                tCtx.fillText(linha, left + 4, curY); 
+                curY += parseFloat(el.style.fontSize) * 1.2; 
+            });
+        });
+
+        const link = document.createElement("a");
+        link.download = `${inputTituloNota ? inputTituloNota.value.trim() : "nota"}.png`;
+        link.href = tempCanvas.toDataURL("image/png");
+        link.click();
     });
 }
 
 function getCoordinates(e) {
+    if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -655,33 +844,86 @@ function getCoordinates(e) {
 }
 
 function startPosition(e) {
+    if (!ctx || !canvas) return;
+
+    document.querySelectorAll('.canvas-floating-text').forEach(t => t.blur());
+
+    if (currentTool === "text") {
+        if (e.button === 0) criarInputTexto(e);
+        return;
+    }
+
+    const { x, y } = getCoordinates(e);
     isDrawing = true;
     ctx.beginPath();
-    const { x, y } = getCoordinates(e);
     ctx.moveTo(x, y);
     if (e && e.pointerId) canvas.setPointerCapture(e.pointerId);
 }
 
+function criarInputTexto(e) {
+    if (!canvasWrapper) return;
+    
+    const div = document.createElement("div");
+    div.contentEditable = "true";
+    div.className = "canvas-floating-text";
+    
+    const wrapperRect = canvasWrapper.getBoundingClientRect();
+    const left = e.clientX - wrapperRect.left + canvasWrapper.scrollLeft;
+    const top = e.clientY - wrapperRect.top + canvasWrapper.scrollTop;
+
+    div.style.left = `${left}px`;
+    div.style.top = `${top}px`;
+    
+    if (selectTextoFonte) div.style.fontFamily = selectTextoFonte.value;
+    if (selectTextoTamanho) div.style.fontSize = `${selectTextoTamanho.value}px`;
+    if (corCaneta) div.style.color = corCaneta.value;
+
+    canvasWrapper.appendChild(div);
+    
+    setTimeout(() => {
+        div.focus();
+    }, 10);
+
+    div.addEventListener("blur", () => {
+        if (div.innerText.trim() === "") {
+            div.remove();
+        }
+    });
+}
+
 function endPosition(e) {
-    isDrawing = false;
-    ctx.beginPath();
-    if (e && e.pointerId) canvas.releasePointerCapture(e.pointerId);
+    if (isDrawing && ctx && canvas) {
+        isDrawing = false;
+        ctx.beginPath();
+        if (e && e.pointerId) canvas.releasePointerCapture(e.pointerId);
+        salvarEstadoCanvas();
+    }
 }
 
 function draw(e) {
-    if (!isDrawing) return;
+    if (!isDrawing || currentTool === "text" || !ctx) return;
     const { x, y } = getCoordinates(e);
-    ctx.lineWidth = espessuraCaneta.value;
-    ctx.lineCap = "round";
+    
     ctx.lineJoin = "round";
 
-    if (isEraser) {
+    if (currentTool === "eraser") {
         ctx.globalCompositeOperation = "destination-out";
         ctx.strokeStyle = "rgba(0,0,0,1)";
+        ctx.lineCap = "round";
+        if (espessuraCaneta) ctx.lineWidth = espessuraCaneta.value;
+    } else if (currentTool === "highlighter") {
+        ctx.globalCompositeOperation = "destination-over"; 
+        if (corCaneta) ctx.strokeStyle = hexParaRgba(corCaneta.value, 0.4);
+        ctx.lineCap = "butt"; 
+        ctx.lineJoin = "miter";
+        if (espessuraCaneta) ctx.lineWidth = espessuraCaneta.value * 2.5; 
     } else {
         ctx.globalCompositeOperation = "source-over";
-        ctx.strokeStyle = corCaneta.value;
+        if (corCaneta) ctx.strokeStyle = corCaneta.value;
+        ctx.lineCap = "round";
+        if (espessuraCaneta) ctx.lineWidth = espessuraCaneta.value;
     }
+    
     ctx.lineTo(x, y);
     ctx.stroke();
 }
@@ -695,20 +937,79 @@ if (canvas) {
 }
 
 function salvarCanvasNoArray() {
-    paginasDaNota[paginaAtualIndex] = canvas.toDataURL("image/png");
+    if (canvas) {
+        const texts = [];
+        document.querySelectorAll('.canvas-floating-text').forEach(el => {
+            texts.push({
+                text: el.innerText,
+                left: el.style.left,
+                top: el.style.top,
+                fontFamily: el.style.fontFamily,
+                fontSize: el.style.fontSize,
+                color: el.style.color
+            });
+        });
+        
+        const pageData = {
+            img: canvas.toDataURL("image/png"),
+            texts: texts
+        };
+        paginasDaNota[paginaAtualIndex] = JSON.stringify(pageData);
+    }
 }
 
 function carregarCanvasDoArray() {
+    if (!ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    lblPaginaAtual.textContent = `Página ${paginaAtualIndex + 1} de ${paginasDaNota.length}`;
-    if (paginasDaNota[paginaAtualIndex] && paginasDaNota[paginaAtualIndex] !== "") {
-        const img = new Image();
-        img.onload = () => {
-            ctx.globalCompositeOperation = "source-over";
-            ctx.drawImage(img, 0, 0);
-        };
-        img.src = paginasDaNota[paginaAtualIndex];
+    
+    document.querySelectorAll('.canvas-floating-text').forEach(e => e.remove());
+
+    if (lblPaginaAtual) lblPaginaAtual.textContent = `Página ${paginaAtualIndex + 1} de ${paginasDaNota.length}`;
+    
+    let pageStr = paginasDaNota[paginaAtualIndex];
+    if (!pageStr || pageStr === "") {
+        undoStack = [canvas.toDataURL()];
+        redoStack = [];
+        return;
     }
+
+    let imgSrc = pageStr;
+    let texts = [];
+
+    if (pageStr.startsWith("{")) {
+        try {
+            const parsed = JSON.parse(pageStr);
+            imgSrc = parsed.img;
+            texts = parsed.texts || [];
+        } catch(e) {}
+    }
+
+    const img = new Image();
+    img.onload = () => {
+        ctx.globalCompositeOperation = "source-over";
+        ctx.drawImage(img, 0, 0);
+        undoStack = [canvas.toDataURL()];
+        redoStack = [];
+    };
+    img.src = imgSrc;
+
+    texts.forEach(t => {
+        const div = document.createElement("div");
+        div.contentEditable = "true";
+        div.className = "canvas-floating-text";
+        div.style.left = t.left;
+        div.style.top = t.top;
+        div.style.fontFamily = t.fontFamily;
+        div.style.fontSize = t.fontSize;
+        div.style.color = t.color;
+        div.innerText = t.text;
+        
+        div.addEventListener("blur", () => {
+            if (div.innerText.trim() === "") div.remove();
+        });
+        
+        if(canvasWrapper) canvasWrapper.appendChild(div);
+    });
 }
 
 if (btnNovaPaginaNota) {
@@ -745,25 +1046,25 @@ if (btnNovaNota) {
         notaEditandoId = null;
         paginasDaNota = [""];
         paginaAtualIndex = 0;
-        inputTituloNota.value = "";
-        selectTipoFolha.value = "paper-blank";
-        canvas.className = "paper-blank";
+        if (inputTituloNota) inputTituloNota.value = "";
+        if (selectTipoFolha) {
+            selectTipoFolha.value = "paper-blank";
+            if (canvas) canvas.className = "paper-blank";
+        }
         carregarCanvasDoArray();
-        isEraser = false;
-        btnBorracha.classList.remove('btn-secondary');
-        btnBorracha.classList.add('btn-outline-secondary');
+        alternarFerramenta("pen");
     });
 }
 
 if (btnSalvarNota) {
     btnSalvarNota.addEventListener('click', () => {
         salvarCanvasNoArray();
-        const titulo = inputTituloNota.value.trim() || "Nota sem título";
+        const titulo = inputTituloNota ? inputTituloNota.value.trim() : "Nota sem título";
         const imagensJson = JSON.stringify(paginasDaNota);
-        const tipoFolha = selectTipoFolha.value;
+        const tipoFolha = selectTipoFolha ? selectTipoFolha.value : "paper-blank";
 
         const dadosNota = {
-            titulo: titulo,
+            titulo: titulo || "Nota sem título",
             imagemBase64: imagensJson,
             tipoFolha: tipoFolha,
             tagId: paginaAtivaId
@@ -787,7 +1088,8 @@ if (btnSalvarNota) {
 }
 
 function finalizaSalvamento() {
-    document.getElementById('btnFecharCanvas').click();
+    const btnFechar = document.getElementById('btnFecharCanvas');
+    if (btnFechar) btnFechar.click();
     carregarNotas();
     Swal.fire("Sucesso!", "Nota digital salva.", "success");
 }
@@ -801,6 +1103,7 @@ function carregarNotas() {
 }
 
 function renderizarNotas(notas) {
+    if (!listaNotas) return;
     listaNotas.innerHTML = "";
     if (notas.length === 0) {
         listaNotas.innerHTML = `<span class="text-muted small">Nenhuma anotação nesta página.</span>`;
@@ -821,8 +1124,13 @@ function renderizarNotas(notas) {
         card.style.height = "160px";
         card.style.position = "relative";
 
+        let coverImgSrc = arrayDestaNota[0];
+        if (coverImgSrc && coverImgSrc.startsWith("{")) {
+            try { coverImgSrc = JSON.parse(coverImgSrc).img; } catch(e) {}
+        }
+
         const img = document.createElement("img");
-        img.src = arrayDestaNota[0];
+        img.src = coverImgSrc;
         img.style.width = "100%";
         img.style.height = "100%";
         img.style.objectFit = "contain";
@@ -859,13 +1167,19 @@ function renderizarNotas(notas) {
             notaEditandoId = nota.id;
             paginasDaNota = [...arrayDestaNota];
             paginaAtualIndex = 0;
-            inputTituloNota.value = nota.titulo;
-            selectTipoFolha.value = nota.tipoFolha;
-            canvas.className = nota.tipoFolha;
+            if (inputTituloNota) inputTituloNota.value = nota.titulo;
+            if (selectTipoFolha) {
+                selectTipoFolha.value = nota.tipoFolha;
+                if (canvas) canvas.className = nota.tipoFolha;
+            }
 
-            const modalCanvasBootstrap = new bootstrap.Modal(document.getElementById('modalCanvas'));
-            modalCanvasBootstrap.show();
-            setTimeout(carregarCanvasDoArray, 300);
+            const elModal = document.getElementById('modalCanvas');
+            if (elModal) {
+                const modalCanvasBootstrap = new bootstrap.Modal(elModal);
+                modalCanvasBootstrap.show();
+                setTimeout(carregarCanvasDoArray, 300);
+                alternarFerramenta("pen");
+            }
         };
 
         const btnDel = document.createElement("button");
@@ -892,9 +1206,14 @@ function renderizarNotas(notas) {
 function visualizarNota(titulo, arrayImagens, tipoFolha) {
     let paginaView = 0;
     function mostrarSweetAlert() {
+        let displayImg = arrayImagens[paginaView];
+        if (displayImg && displayImg.startsWith("{")) {
+            try { displayImg = JSON.parse(displayImg).img; } catch(e) {}
+        }
+
         Swal.fire({
             title: `${titulo} (Pág ${paginaView + 1}/${arrayImagens.length})`,
-            imageUrl: arrayImagens[paginaView],
+            imageUrl: displayImg,
             imageWidth: 600,
             imageAlt: 'Anotação',
             showDenyButton: arrayImagens.length > 1,
@@ -917,6 +1236,7 @@ function visualizarNota(titulo, arrayImagens, tipoFolha) {
 }
 
 [colAFazer, colEmAndamento, colConcluido].forEach(col => {
+    if (!col) return;
     col.addEventListener("dragover", (e) => {
         e.preventDefault();
     });

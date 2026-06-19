@@ -238,17 +238,62 @@
                     </div>
                 </div>
                 <div class="modal-body p-2 d-flex flex-column align-items-center">
-                    <div class="d-flex gap-2 mb-2 bg-white p-2 rounded shadow-sm w-100 justify-content-center flex-wrap align-items-center">
+                    <div class="d-flex gap-2 mb-2 bg-white p-2 rounded shadow-sm w-100 justify-content-center flex-wrap align-items-center" style="position: relative;">
                         <div class="d-flex align-items-center gap-1">
                             <label class="small fw-bold mb-0">Cor:</label>
                             <input type="color" id="corCaneta" class="form-control form-control-color p-0 border-0" value="#000000" style="width:30px; height:30px;">
                         </div>
                         <div class="d-flex align-items-center gap-1">
-                            <label class="small fw-bold mb-0">Tam:</label>
-                            <input type="range" id="espessuraCaneta" class="form-range" min="1" max="20" value="3" style="width: 70px;">
+                            <label class="small fw-bold mb-0">Fonte:</label>
+                            <select id="selectTextoFonte" class="form-select form-select-sm" style="width: 100px;">
+                                <option value="Inter">Inter</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Courier Prime">Courier</option>
+                                <option value="Georgia">Georgia</option>
+                            </select>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary py-1" id="btnBorracha">Borracha</button>
+                        <div class="d-flex align-items-center gap-1">
+                            <label class="small fw-bold mb-0">Tam:</label>
+                            <select id="selectTextoTamanho" class="form-select form-select-sm" style="width: 70px;">
+                                <option value="14">14px</option>
+                                <option value="18" selected>18px</option>
+                                <option value="24">24px</option>
+                                <option value="32">32px</option>
+                                <option value="48">48px</option>
+                            </select>
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <label class="small fw-bold mb-0">Traço:</label>
+                            <input type="range" id="espessuraCaneta" class="form-range" min="1" max="20" value="3" style="width: 60px;">
+                        </div>
+                        
+                        <button class="btn btn-sm btn-dark py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnCaneta">
+                            <img width="16" height="16" src="https://img.icons8.com/forma-thin-sharp/24/pen.png" alt="pen"/>
+                            <span class="btn-lbl-text">Caneta</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnMarcaTexto">
+                            <img width="16" height="16" src="https://img.icons8.com/external-sbts2018-outline-sbts2018/58/external-highlighter-stationery-items-sbts2018-outline-sbts2018.png" alt="highlighter"/>
+                            <span class="btn-lbl-text">Marca-Texto</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnTexto">
+                            <img width="16" height="16" src="https://img.icons8.com/material-outlined/24/text.png" alt="text"/>
+                            <span class="btn-lbl-text">Texto</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnBorracha">
+                            <img width="16" height="16" src="https://img.icons8.com/material-rounded/24/erase.png" alt="erase"/>
+                            <span class="btn-lbl-text">Borracha</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnUndo">
+                            <img width="16" height="16" src="https://img.icons8.com/fluency-systems-regular/48/undo--v1.png" alt="undo"/>
+                            <span class="btn-lbl-text">Desfazer</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnRedo">
+                            <img width="16" height="16" src="https://img.icons8.com/fluency-systems-regular/48/redo.png" alt="redo"/>
+                            <span class="btn-lbl-text">Refazer</span>
+                        </button>
+                        
                         <button class="btn btn-sm btn-outline-danger py-1" id="btnLimparCanvas">Limpar</button>
+                        <button class="btn btn-sm btn-primary py-1" id="btnExportarNota">Baixar Nota</button>
                     </div>
 
                     <div class="d-flex gap-2 mb-2 w-100 justify-content-center align-items-center flex-wrap">
@@ -258,7 +303,7 @@
                         <button class="btn btn-sm btn-success fw-bold px-2" id="btnNovaPaginaNota">+ Pág</button>
                     </div>
 
-                    <div class="canvas-wrapper">
+                    <div class="canvas-wrapper" id="canvasWrapper">
                         <canvas id="drawCanvas" width="850" height="500" class="paper-blank"></canvas>
                     </div>
                 </div>

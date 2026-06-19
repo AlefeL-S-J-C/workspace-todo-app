@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Courier+Prime&family=Georgia&display=swap');
 
 body.dark-mode {
     --bg-body: #121212 !important;
@@ -40,8 +40,13 @@ body.dark-mode ::placeholder {
 
 body.dark-mode .kanban-card img,
 body.dark-mode .nota-card img,
-body.dark-mode .btn-link img {
+body.dark-mode .btn-link img,
+body.dark-mode .btn img {
     filter: brightness(0) invert(1) !important; 
+}
+
+.btn-dark img {
+    filter: brightness(0) invert(1) !important;
 }
 
 body:not(.dark-mode) .kanban-card img,
@@ -85,7 +90,6 @@ body.dark-mode #inputPesquisa::placeholder {
     color: #cbd5e1 !important;
 }
 
-/* Contador de Tarefas */
 #contadorTarefas {
     background-color: #e2e8f0 !important; 
     color: #1e293b !important; 
@@ -298,13 +302,82 @@ body {
 .paper-grid { background-color: #ffffff; background-image: linear-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(90deg, #cbd5e1 1px, transparent 1px); background-size: 25px 25px; }
 .paper-dotted { background-color: #ffffff; background-image: radial-gradient(#94a3b8 1.5px, transparent 1.5px); background-size: 25px 25px; }
 
-.canvas-wrapper { width: 100%; overflow: auto; display: flex; justify-content: center; background: #e3e5e8; padding: 10px; border-radius: 8px; }
+.canvas-wrapper { width: 100%; overflow: auto; display: flex; justify-content: center; background: #e3e5e8; padding: 10px; border-radius: 8px; position: relative; }
 #drawCanvas { border: 1px solid #dee2e6; border-radius: 8px; cursor: crosshair; touch-action: none; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); background-color: #ffffff; }
+
+.canvas-floating-text {
+    position: absolute;
+    min-width: 20px;
+    padding: 2px 4px;
+    outline: none;
+    z-index: 10;
+    border: 1px dashed transparent;
+    background: transparent;
+    cursor: text;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    border-radius: 4px;
+    transition: background 0.2s, border 0.2s;
+}
+
+.canvas-floating-text:focus, .canvas-floating-text:hover {
+    border-color: #3b82f6;
+    background-color: rgba(255, 255, 255, 0.8);
+}
 
 .nota-card { border: 1px solid #e3e5e8; border-radius: 8px; padding: 10px; background: white; cursor: pointer; transition: 0.2s; }
 .nota-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
 
 .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.4); z-index: 1025; }
+
+.btn-tool {
+    position: relative;
+    overflow: visible !important;
+}
+
+.btn-lbl-text {
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1e293b;
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, top 0.2s ease;
+    z-index: 1060;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-tool::after {
+    content: '';
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1e293b transparent transparent transparent;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, top 0.2s ease;
+    z-index: 1060;
+}
+
+.btn-tool:hover .btn-lbl-text {
+    opacity: 1;
+    top: -40px;
+}
+
+.btn-tool:hover::after {
+    opacity: 1;
+    top: -16px;
+}
 
 @media (max-width: 991.98px) {
     .sidebar { position: fixed; top: 0; left: 0; height: 100vh; transform: translateX(-100%); }
