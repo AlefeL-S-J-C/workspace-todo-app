@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Courier+Prime&family=Georgia&display=swap');
 
+:root {
+    --bg-toolbar: #ffffff;
+    --bg-input: #f1f3f5;
+    --text-input: #212529;
+    --border-button: #ced4da;
+    --shadow-toolbar: rgba(0, 0, 0, 0.05) 0px 4px 12px;
+}
+
 body.dark-mode {
     --bg-body: #121212 !important;
     --bg-sidebar: #1e1e1e !important;
@@ -9,6 +17,11 @@ body.dark-mode {
     --text-main: #ffffff !important;
     --text-muted: #e2e8f0 !important; 
     --border-color: #404040 !important;
+    --bg-toolbar: #1e1e1e !important;
+    --bg-input: #2d2d30 !important;
+    --text-input: #f8f9fa !important;
+    --border-button: #495057 !important;
+    --shadow-toolbar: rgba(0, 0, 0, 0.3) 0px 4px 12px !important;
 }
 
 body.dark-mode .modal-content,
@@ -47,6 +60,12 @@ body.dark-mode .btn img {
 
 .btn-dark img {
     filter: brightness(0) invert(1) !important;
+}
+
+body.dark-mode .btn-dark {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
 }
 
 body:not(.dark-mode) .kanban-card img,
@@ -323,6 +342,38 @@ body {
 .canvas-floating-text:focus, .canvas-floating-text:hover {
     border-color: #3b82f6;
     background-color: rgba(255, 255, 255, 0.8);
+}
+
+.canvas-toolbar {
+    background-color: var(--bg-toolbar) !important;
+    box-shadow: var(--shadow-toolbar) !important;
+}
+
+.canvas-toolbar .form-select,
+.canvas-toolbar .form-control-color,
+.canvas-toolbar .form-range {
+    background-color: var(--bg-input) !important;
+    color: var(--text-input) !important;
+    border-color: var(--border-button) !important;
+}
+
+.canvas-toolbar .btn-outline-secondary {
+    color: var(--text-input) !important;
+    border-color: var(--border-button) !important;
+    background-color: transparent !important;
+}
+
+.canvas-toolbar .btn-outline-secondary:hover,
+.canvas-toolbar .btn-outline-secondary.active {
+    background-color: var(--bg-input) !important;
+    color: var(--text-input) !important;
+}
+
+.canvas-toolbar-pagination {
+    background-color: var(--bg-toolbar) !important;
+    box-shadow: var(--shadow-toolbar) !important;
+    padding: 8px;
+    border-radius: 8px;
 }
 
 .nota-card { border: 1px solid #e3e5e8; border-radius: 8px; padding: 10px; background: white; cursor: pointer; transition: 0.2s; }
