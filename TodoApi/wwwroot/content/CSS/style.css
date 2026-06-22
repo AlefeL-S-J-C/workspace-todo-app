@@ -437,3 +437,125 @@ body {
     .kanban-container { flex-direction: column; overflow-y: auto; }
     .kanban-column { max-height: none; }
 }
+
+.financeiro-container {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.financeiro-summary {
+    gap: 1rem;
+}
+
+.financeiro-card {
+    flex: 1;
+    min-width: 180px;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color, #e3e5e8);
+    background-color: var(--bg-card, white);
+}
+
+.financeiro-card-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted, #6b7280);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.financeiro-card-valor {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.receita-card {
+    border-left: 4px solid #22c55e;
+}
+
+.despesa-card {
+    border-left: 4px solid #ef4444;
+}
+
+.saldo-card {
+    border-left: 4px solid #3b82f6;
+}
+
+.receita-valor {
+    color: #16a34a;
+}
+
+.despesa-valor {
+    color: #dc2626;
+}
+
+.saldo-positivo {
+    color: #16a34a;
+}
+
+.saldo-negativo {
+    color: #dc2626;
+}
+
+body.dark-mode .financeiro-card {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .financeiro-card-label {
+    color: var(--text-muted) !important;
+}
+
+body.dark-mode .receita-valor,
+body.dark-mode .saldo-positivo {
+    color: #4ade80 !important;
+}
+
+body.dark-mode .despesa-valor,
+body.dark-mode .saldo-negativo {
+    color: #f87171 !important;
+}
+
+.financeiro-tabela {
+    background-color: var(--bg-card, white);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color, #e3e5e8);
+}
+
+.financeiro-tabela thead {
+    background-color: var(--bg-hover, #f1f5f9);
+}
+
+.financeiro-tabela th {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted, #64748b);
+    border-bottom: 2px solid var(--border-color, #e3e5e8);
+    padding: 0.75rem 1rem;
+}
+
+.financeiro-tabela td {
+    vertical-align: middle;
+    padding: 0.75rem 1rem;
+    border-color: var(--border-color, #e3e5e8);
+}
+
+body.dark-mode .financeiro-tabela {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .financeiro-tabela th,
+body.dark-mode .financeiro-tabela td {
+    border-color: var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .financeiro-tabela thead {
+    background-color: var(--bg-hover) !important;
+}

@@ -26,6 +26,32 @@ app.MapGet("/urgencias", async (AppDbContext db) =>
 app.MapGet("/tags", async (AppDbContext db) =>
     await db.Tags.ToListAsync());
 
+app.MapPost("/tags", async (Tag novaTag, AppDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(novaTag.Nome))
+        return Results.BadRequest(new { mensagem = "O nome da página é obrigatório." });
+
+    if (string.IsNullOrWhiteSpace(novaTag.Tipo))
+        novaTag.Tipo = "kanban";
+
+    db.Tags.Add(novaTag);
+    await db.SaveChangesAsync();
+    return Results.Created($"/tags/{novaTag.Id}", novaTag);
+});
+
+app.MapPut("/tags/{id}", async (int id, Tag tagAtualizada, AppDbContext db) =>
+{
+    var tag = await db.Tags.FindAsync(id);
+    if (tag is null) return Results.NotFound();
+
+    tag.Nome = tagAtualizada.Nome ?? tag.Nome;
+    tag.Cor = tagAtualizada.Cor ?? tag.Cor;
+    tag.Tipo = tagAtualizada.Tipo ?? tag.Tipo;
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
 app.MapGet("/tarefas", async (AppDbContext db) =>
 {
     var lista = await db.Tarefas
@@ -166,19 +192,7 @@ app.MapDelete("/subtarefas/{id}", async (int id, AppDbContext db) =>
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
-
-    if (!db.Urgencias.Any())
-    {
-        db.Urgencias.AddRange(
-            new Urgencia { Id = 1, Descricao = "Não Urgente", Prazo = "24 dias", Cor = "#007bff", Classe = "bg-primary" },
-            new Urgencia { Id = 2, Descricao = "Pouco Urgente", Prazo = "12 dias", Cor = "#198754", Classe = "bg-success" },
-            new Urgencia { Id = 3, Descricao = "Urgente", Prazo = "6 dias", Cor = "#ffc107", Classe = "bg-warning" },
-            new Urgencia { Id = 4, Descricao = "Muito Urgente", Prazo = "1 dia", Cor = "#fd7e14", Classe = "bg-orange" },
-            new Urgencia { Id = 5, Descricao = "Imediato", Prazo = "Imediato", Cor = "#dc3545", Classe = "bg-danger" }
-        );
-        db.SaveChanges();
-    }
+    db.Database.Migrate();
 }
 app.MapGet("/anotacoes/{tagId}", async (int tagId, AppDbContext db) =>
 {
@@ -205,4 +219,74 @@ app.MapDelete("/anotacoes/{id}", async (int id, AppDbContext db) =>
     await db.SaveChangesAsync();
     return Results.Ok();
 });
+
+app.MapGet("/transacoes/{tagId}", async (int tagId, AppDbContext db) =>
+{
+    var transacoes = await db.TransacoesFinanceiras
+        .Where(t => t.TagId == tagId)
+        .OrderByDescending(t => t.Data)
+        .ToListAsync();
+    return Results.Ok(transacoes);
+});
+
+app.MapPost("/transacoes", async (TransacaoFinanceira nova, AppDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(nova.Descricao))
+        return Results.BadRequest(new { mensagem = "A descrição é obrigatória." });
+
+    if (nova.Valor <= 0)
+        return Results.BadRequest(new { mensagem = "O valor deve ser maior que zero." });
+
+    if (string.IsNullOrWhiteSpace(nova.Data))
+        nova.Data = DateTime.Now.ToString("yyyy-MM-dd");
+
+    db.TransacoesFinanceiras.Add(nova);
+    await db.SaveChangesAsync();
+    return Results.Created($"/transacoes/{nova.Id}", nova);
+});
+
+app.MapPut("/transacoes/{id}", async (int id, TransacaoFinanceira atualizada, AppDbContext db) =>
+{
+    var transacao = await db.TransacoesFinanceiras.FindAsync(id);
+    if (transacao is null) return Results.NotFound();
+
+    if (string.IsNullOrWhiteSpace(atualizada.Descricao))
+        return Results.BadRequest(new { mensagem = "A descrição não pode ficar vazia." });
+
+    if (atualizada.Valor <= 0)
+        return Results.BadRequest(new { mensagem = "O valor deve ser maior que zero." });
+
+    transacao.Descricao = atualizada.Descricao;
+    transacao.Valor = atualizada.Valor;
+    transacao.Tipo = atualizada.Tipo;
+    transacao.Categoria = atualizada.Categoria;
+    transacao.Data = atualizada.Data;
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+app.MapDelete("/transacoes/{id}", async (int id, AppDbContext db) =>
+{
+    var transacao = await db.TransacoesFinanceiras.FindAsync(id);
+    if (transacao is null) return Results.NotFound();
+
+    db.TransacoesFinanceiras.Remove(transacao);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+app.MapDelete("/transacoes/todas/{tagId}", async (int tagId, AppDbContext db) =>
+{
+    var todas = await db.TransacoesFinanceiras
+        .Where(t => t.TagId == tagId)
+        .ToListAsync();
+
+    if (!todas.Any()) return Results.Ok();
+
+    db.TransacoesFinanceiras.RemoveRange(todas);
+    await db.SaveChangesAsync();
+    return Results.Ok();
+});
+
 app.Run();

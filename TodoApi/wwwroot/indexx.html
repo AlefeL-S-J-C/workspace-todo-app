@@ -83,6 +83,61 @@
                     <div class="kanban-cards" id="colConcluido"></div>
                 </div>
             </div>
+
+            <div id="financeiroContainer" class="financeiro-container" style="display: none;">
+                <div class="financeiro-summary d-flex flex-wrap gap-3 px-3 pt-3">
+                    <div class="financeiro-card receita-card">
+                        <div class="financeiro-card-label">Receitas</div>
+                        <div class="financeiro-card-valor receita-valor" id="totalReceitas">R$ 0,00</div>
+                    </div>
+                    <div class="financeiro-card despesa-card">
+                        <div class="financeiro-card-label">Despesas</div>
+                        <div class="financeiro-card-valor despesa-valor" id="totalDespesas">R$ 0,00</div>
+                    </div>
+                    <div class="financeiro-card saldo-card">
+                        <div class="financeiro-card-label">Saldo</div>
+                        <div class="financeiro-card-valor saldo-valor" id="saldoTotal">R$ 0,00</div>
+                    </div>
+                </div>
+
+                <div class="financeiro-filtros px-3 pt-3 d-flex gap-2 flex-wrap align-items-center">
+                    <select id="filtroCategoria" class="form-select form-select-sm" style="width: auto;">
+                        <option value="todas">Todas as categorias</option>
+                        <option value="Alimentação">Alimentação</option>
+                        <option value="Transporte">Transporte</option>
+                        <option value="Moradia">Moradia</option>
+                        <option value="Saúde">Saúde</option>
+                        <option value="Educação">Educação</option>
+                        <option value="Lazer">Lazer</option>
+                        <option value="Salário">Salário</option>
+                        <option value="Investimento">Investimento</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                    <select id="filtroMes" class="form-select form-select-sm" style="width: auto;">
+                        <option value="todos">Todos os meses</option>
+                    </select>
+                    <button class="btn btn-outline-success btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalTransacao" id="btnNovaTransacao">+ Transação</button>
+                    <button class="btn btn-outline-danger btn-sm fw-bold" id="btnLimparTransacoes">🗑️ Limpar Tudo</button>
+                </div>
+
+                <div class="px-3 pt-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover financeiro-tabela">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Categoria</th>
+                                    <th>Tipo</th>
+                                    <th class="text-end">Valor</th>
+                                    <th class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaTransacoes"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -312,6 +367,59 @@
                     <button type="button" class="btn btn-success" id="btnSalvarNota">💾 Salvar Nota</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalTransacao" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form id="formTransacao" class="modal-content" onsubmit="return false">
+                <input type="hidden" id="inputTransacaoId">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalTransacaoTitulo">Nova Transação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body d-flex flex-column gap-3">
+                    <div>
+                        <label class="form-label fw-semibold">Descrição</label>
+                        <input type="text" id="inputTransacaoDescricao" class="form-control" placeholder="Ex: Salário, Conta de luz..." required>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">Valor (R$)</label>
+                        <input type="number" id="inputTransacaoValor" class="form-control" placeholder="0,00" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Tipo</label>
+                            <select id="selectTransacaoTipo" class="form-select" required>
+                                <option value="Despesa">Despesa</option>
+                                <option value="Receita">Receita</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Categoria</label>
+                            <select id="selectTransacaoCategoria" class="form-select" required>
+                                <option value="Alimentação">Alimentação</option>
+                                <option value="Transporte">Transporte</option>
+                                <option value="Moradia">Moradia</option>
+                                <option value="Saúde">Saúde</option>
+                                <option value="Educação">Educação</option>
+                                <option value="Lazer">Lazer</option>
+                                <option value="Salário">Salário</option>
+                                <option value="Investimento">Investimento</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">Data</label>
+                        <input type="date" id="inputTransacaoData" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="btnSalvarTransacao">Salvar</button>
+                </div>
+            </form>
         </div>
     </div>
 

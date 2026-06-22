@@ -8,6 +8,7 @@ const API_URGENCIAS_URL = "http://localhost:5152/urgencias";
 const API_TAGS_URL = "http://localhost:5152/tags";
 const API_SUBTAREFAS_URL = "http://localhost:5152/subtarefas";
 const API_NOTAS_URL = "http://localhost:5152/anotacoes";
+const API_TRANSACOES_URL = "http://localhost:5152/transacoes";
 
 let arrUrgencia = [];
 let arrTags = [];
@@ -132,7 +133,12 @@ function inicializarSistema() {
                 paginaAtivaId = arrTags[0].id;
             }
             renderizarMenuLateral();
-            carregarTarefas();
+            const tagAtiva = arrTags.find(t => t.id === paginaAtivaId);
+            if (tagAtiva && tagAtiva.tipo === "financeiro") {
+                mostrarFinanceiro();
+            } else {
+                carregarTarefas();
+            }
         })
         .catch(err => console.error(err));
 }
@@ -261,7 +267,7 @@ function renderizarMenuLateral() {
         const item = document.createElement("div");
         item.className = `page-item ${tag.id === paginaAtivaId ? 'active' : ''}`;
         const spanNome = document.createElement("span");
-        spanNome.textContent = `📄 ${tag.nome}`;
+        spanNome.textContent = `${tag.tipo === "financeiro" ? "💰" : "📄"} ${tag.nome}`;
         item.appendChild(spanNome);
         
         if (tag.id === paginaAtivaId && tituloPaginaAtiva) {
@@ -274,7 +280,12 @@ function renderizarMenuLateral() {
                 alternarMenuMovel();
             }
             renderizarMenuLateral();
-            renderizarTarefas();
+            if (tag.tipo === "financeiro") {
+                mostrarFinanceiro();
+            } else {
+                mostrarKanban();
+                renderizarTarefas();
+            }
         });
         listaPaginas.appendChild(item);
     });
@@ -1279,6 +1290,290 @@ if (switchDarkMode) {
             document.body.classList.remove("dark-mode");
             localStorage.setItem("theme", "light");
         }
+    });
+}
+
+let transacoes = [];
+const financeiroContainer = document.getElementById("financeiroContainer");
+const kanbanContainer = document.querySelector(".kanban-container");
+const contadorTarefasEl = document.getElementById("contadorTarefas");
+const btnAbrirGaleriaNotasEl = document.getElementById("btnAbrirGaleriaNotas");
+const btnAbrirModalCriarEl = document.getElementById("btnAbrirModalCriar");
+const btnLimparTodasEl = document.getElementById("btnLimparTodas");
+const inputPesquisaEl = document.getElementById("inputPesquisa");
+
+const formTransacao = document.getElementById("formTransacao");
+const inputTransacaoId = document.getElementById("inputTransacaoId");
+const inputTransacaoDescricao = document.getElementById("inputTransacaoDescricao");
+const inputTransacaoValor = document.getElementById("inputTransacaoValor");
+const selectTransacaoTipo = document.getElementById("selectTransacaoTipo");
+const selectTransacaoCategoria = document.getElementById("selectTransacaoCategoria");
+const inputTransacaoData = document.getElementById("inputTransacaoData");
+const modalTransacaoTitulo = document.getElementById("modalTransacaoTitulo");
+const btnSalvarTransacao = document.getElementById("btnSalvarTransacao");
+const listaTransacoes = document.getElementById("listaTransacoes");
+const totalReceitas = document.getElementById("totalReceitas");
+const totalDespesas = document.getElementById("totalDespesas");
+const saldoTotal = document.getElementById("saldoTotal");
+const filtroCategoria = document.getElementById("filtroCategoria");
+const filtroMes = document.getElementById("filtroMes");
+const btnNovaTransacao = document.getElementById("btnNovaTransacao");
+const btnLimparTransacoes = document.getElementById("btnLimparTransacoes");
+
+function mostrarKanban() {
+    if (financeiroContainer) financeiroContainer.style.display = "none";
+    if (kanbanContainer) kanbanContainer.style.display = "";
+    if (contadorTarefasEl) contadorTarefasEl.style.display = "";
+    if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "";
+    if (btnAbrirModalCriarEl) btnAbrirModalCriarEl.style.display = "";
+    if (btnLimparTodasEl) btnLimparTodasEl.style.display = "";
+    if (inputPesquisaEl) inputPesquisaEl.style.display = "";
+    if (btnLimparTransacoes) btnLimparTransacoes.style.display = "none";
+}
+
+function mostrarFinanceiro() {
+    if (kanbanContainer) kanbanContainer.style.display = "none";
+    if (financeiroContainer) financeiroContainer.style.display = "";
+    if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
+    if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
+    if (btnAbrirModalCriarEl) btnAbrirModalCriarEl.style.display = "none";
+    if (btnLimparTodasEl) btnLimparTodasEl.style.display = "none";
+    if (inputPesquisaEl) inputPesquisaEl.style.display = "none";
+    if (btnLimparTransacoes) btnLimparTransacoes.style.display = "";
+    carregarTransacoes();
+}
+
+function formatarMoeda(valor) {
+    return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function formatarDataBRT(dataString) {
+    if (!dataString) return "";
+    const partes = dataString.split("T")[0].split("-");
+    if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    return dataString;
+}
+
+function popularFiltroMeses() {
+    if (!filtroMes) return;
+    const meses = new Set();
+    transacoes.forEach(t => {
+        const partes = t.data.split("T")[0].split("-");
+        if (partes.length >= 2) meses.add(`${partes[0]}-${partes[1]}`);
+    });
+    filtroMes.innerHTML = '<option value="todos">Todos os meses</option>';
+    const mesesOrdenados = [...meses].sort().reverse();
+    mesesOrdenados.forEach(m => {
+        const [ano, mes] = m.split("-");
+        const nomeMes = new Date(Number(ano), Number(mes) - 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+        filtroMes.appendChild(opt);
+    });
+}
+
+function carregarTransacoes() {
+    if (!paginaAtivaId) return;
+    fetch(`${API_TRANSACOES_URL}/${paginaAtivaId}`)
+        .then(res => res.json())
+        .then(dados => {
+            transacoes = dados;
+            popularFiltroMeses();
+            renderizarResumoFinanceiro();
+            renderizarTransacoes();
+        })
+        .catch(err => console.error(err));
+}
+
+function renderizarResumoFinanceiro() {
+    let totalRec = 0, totalDesp = 0;
+    const transacoesFiltradas = filtrarTransacoes();
+    transacoesFiltradas.forEach(t => {
+        if (t.tipo === "Receita") totalRec += t.valor;
+        else totalDesp += t.valor;
+    });
+    if (totalReceitas) totalReceitas.textContent = formatarMoeda(totalRec);
+    if (totalDespesas) totalDespesas.textContent = formatarMoeda(totalDesp);
+    if (saldoTotal) {
+        const saldo = totalRec - totalDesp;
+        saldoTotal.textContent = formatarMoeda(saldo);
+        saldoTotal.className = `financeiro-card-valor saldo-valor ${saldo >= 0 ? "saldo-positivo" : "saldo-negativo"}`;
+    }
+}
+
+function filtrarTransacoes() {
+    let resultado = [...transacoes];
+    if (filtroCategoria && filtroCategoria.value !== "todas") {
+        resultado = resultado.filter(t => t.categoria === filtroCategoria.value);
+    }
+    if (filtroMes && filtroMes.value !== "todos") {
+        resultado = resultado.filter(t => t.data.startsWith(filtroMes.value));
+    }
+    return resultado;
+}
+
+function renderizarTransacoes() {
+    if (!listaTransacoes) return;
+    listaTransacoes.innerHTML = "";
+    const transacoesFiltradas = filtrarTransacoes();
+    if (transacoesFiltradas.length === 0) {
+        listaTransacoes.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">Nenhuma transação encontrada.</td></tr>`;
+        return;
+    }
+    transacoesFiltradas.forEach(t => {
+        const tr = document.createElement("tr");
+        const isReceita = t.tipo === "Receita";
+        tr.innerHTML = `
+            <td class="small">${formatarDataBRT(t.data)}</td>
+            <td class="fw-semibold small">${t.descricao}</td>
+            <td><span class="badge bg-secondary">${t.categoria}</span></td>
+            <td><span class="badge ${isReceita ? "bg-success" : "bg-danger"}">${t.tipo}</span></td>
+            <td class="text-end fw-bold ${isReceita ? "text-success" : "text-danger"}">${formatarMoeda(t.valor)}</td>
+            <td class="text-center">
+                <div class="d-flex gap-1 justify-content-center">
+                    <button class="btn btn-sm p-0 border-0 bg-transparent btn-editar-transacao" data-id="${t.id}">
+                        <img width="16" height="16" src="https://img.icons8.com/ios-glyphs/30/edit--v1.png"/>
+                    </button>
+                    <button class="btn btn-sm p-0 border-0 bg-transparent text-danger fw-bold btn-deletar-transacao" data-id="${t.id}">&times;</button>
+                </div>
+            </td>
+        `;
+        listaTransacoes.appendChild(tr);
+    });
+
+    listaTransacoes.querySelectorAll(".btn-editar-transacao").forEach(btn => {
+        btn.addEventListener("click", () => editarTransacao(Number(btn.dataset.id)));
+    });
+    listaTransacoes.querySelectorAll(".btn-deletar-transacao").forEach(btn => {
+        btn.addEventListener("click", () => deletarTransacao(Number(btn.dataset.id)));
+    });
+}
+
+function abrirModalNovaTransacao() {
+    if (inputTransacaoId) inputTransacaoId.value = "";
+    if (modalTransacaoTitulo) modalTransacaoTitulo.textContent = "Nova Transação";
+    if (btnSalvarTransacao) btnSalvarTransacao.textContent = "Salvar";
+    if (formTransacao) formTransacao.reset();
+    if (inputTransacaoData) inputTransacaoData.value = new Date().toISOString().split("T")[0];
+    if (selectTransacaoTipo) selectTransacaoTipo.value = "Despesa";
+    if (selectTransacaoCategoria) selectTransacaoCategoria.value = "Outros";
+}
+
+function editarTransacao(id) {
+    const t = transacoes.find(item => item.id === id);
+    if (!t) return;
+    if (inputTransacaoId) inputTransacaoId.value = t.id;
+    if (modalTransacaoTitulo) modalTransacaoTitulo.textContent = "Editar Transação";
+    if (btnSalvarTransacao) btnSalvarTransacao.textContent = "Atualizar";
+    if (inputTransacaoDescricao) inputTransacaoDescricao.value = t.descricao;
+    if (inputTransacaoValor) inputTransacaoValor.value = t.valor;
+    if (selectTransacaoTipo) selectTransacaoTipo.value = t.tipo;
+    if (selectTransacaoCategoria) selectTransacaoCategoria.value = t.categoria;
+    if (inputTransacaoData) inputTransacaoData.value = t.data.split("T")[0];
+    var modal = new bootstrap.Modal(document.getElementById("modalTransacao"));
+    modal.show();
+}
+
+function deletarTransacao(id) {
+    var t = transacoes.find(function(item) { return item.id === id; });
+    if (!t) return;
+    swalWithBootstrapButtons.fire({
+        title: "Excluir?",
+        text: "Apagar \"" + t.descricao + "\"?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sim",
+        cancelButtonText: "Não"
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            fetch(API_TRANSACOES_URL + "/" + id, { method: "DELETE" })
+                .then(function() { carregarTransacoes(); });
+        }
+    });
+}
+
+if (btnNovaTransacao) {
+    btnNovaTransacao.addEventListener("click", abrirModalNovaTransacao);
+}
+
+if (formTransacao) {
+    formTransacao.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var id = inputTransacaoId ? Number(inputTransacaoId.value) : 0;
+        var descricao = inputTransacaoDescricao ? inputTransacaoDescricao.value.trim() : "";
+        var valor = inputTransacaoValor ? parseFloat(inputTransacaoValor.value) : 0;
+        var tipo = selectTransacaoTipo ? selectTransacaoTipo.value : "Despesa";
+        var categoria = selectTransacaoCategoria ? selectTransacaoCategoria.value : "Outros";
+        var data = inputTransacaoData ? inputTransacaoData.value : "";
+
+        if (!descricao || valor <= 0 || !data) return;
+
+        var dados = { descricao: descricao, valor: valor, tipo: tipo, categoria: categoria, data: data, tagId: paginaAtivaId };
+
+        if (id > 0) {
+            dados.id = id;
+            fetch(API_TRANSACOES_URL + "/" + id, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dados)
+            }).then(function() {
+                bootstrap.Modal.getInstance(document.getElementById("modalTransacao")).hide();
+                carregarTransacoes();
+            });
+        } else {
+            fetch(API_TRANSACOES_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dados)
+            }).then(function() {
+                bootstrap.Modal.getInstance(document.getElementById("modalTransacao")).hide();
+                carregarTransacoes();
+            });
+        }
+    });
+}
+
+if (filtroCategoria) {
+    filtroCategoria.addEventListener("change", function() {
+        renderizarResumoFinanceiro();
+        renderizarTransacoes();
+    });
+}
+
+if (filtroMes) {
+    filtroMes.addEventListener("change", function() {
+        renderizarResumoFinanceiro();
+        renderizarTransacoes();
+    });
+}
+
+if (btnLimparTransacoes) {
+    btnLimparTransacoes.addEventListener("click", function() {
+        swalWithBootstrapButtons.fire({
+            title: "Limpar tudo?",
+            text: "Todas as transações desta página serão apagadas permanentemente.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sim, apagar tudo",
+            cancelButtonText: "Cancelar"
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                fetch(API_TRANSACOES_URL + "/todas/" + paginaAtivaId, { method: "DELETE" })
+                    .then(function() { carregarTransacoes(); });
+            }
+        });
+    });
+}
+
+if (formTransacao) {
+    formTransacao.querySelectorAll("input").forEach(function(inp) {
+        inp.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                formTransacao.dispatchEvent(new Event("submit"));
+            }
+        });
     });
 }
 

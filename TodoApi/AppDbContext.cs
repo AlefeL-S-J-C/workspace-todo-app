@@ -11,6 +11,7 @@ namespace TodoApi
         public DbSet<Tag> Tags { get; set; }
         public DbSet<Subtarefa> Subtarefas { get; set; }
         public DbSet<Anotacao> Anotacoes { get; set; }
+        public DbSet<TransacaoFinanceira> TransacoesFinanceiras { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -39,6 +40,12 @@ namespace TodoApi
                 .HasForeignKey(a => a.TagId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<TransacaoFinanceira>()
+                .HasOne(t => t.Tag)
+                .WithMany()
+                .HasForeignKey(t => t.TagId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Urgencia>().HasData(
                 new Urgencia { Id = 1, Descricao = "Não Urgente", Prazo = "24 dias", Cor = "#007bff", Classe = "bg-primary" },
                 new Urgencia { Id = 2, Descricao = "Pouco Urgente", Prazo = "12 dias", Cor = "#198754", Classe = "bg-success" },
@@ -48,10 +55,11 @@ namespace TodoApi
             );
 
             modelBuilder.Entity<Tag>().HasData(
-                new Tag { Id = 1, Nome = "Trabalho", Cor = "#6366f1" },
-                new Tag { Id = 2, Nome = "Estudos", Cor = "#a855f7" },
-                new Tag { Id = 3, Nome = "Pessoal", Cor = "#ec4899" },
-                new Tag { Id = 4, Nome = "Casa", Cor = "#14b8a6" }
+                new Tag { Id = 1, Nome = "Trabalho", Cor = "#6366f1", Tipo = "kanban" },
+                new Tag { Id = 2, Nome = "Estudos", Cor = "#a855f7", Tipo = "kanban" },
+                new Tag { Id = 3, Nome = "Pessoal", Cor = "#ec4899", Tipo = "kanban" },
+                new Tag { Id = 4, Nome = "Casa", Cor = "#14b8a6", Tipo = "kanban" },
+                new Tag { Id = 5, Nome = "Financeiro", Cor = "#22c55e", Tipo = "financeiro" }
 
             );
         }
