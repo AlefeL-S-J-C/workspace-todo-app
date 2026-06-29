@@ -4,7 +4,20 @@ Uma aplicação web completa para produtividade e finanças pessoais que combina
 
 ## ✨ Funcionalidades Principais
 
-### 💰 Controle Financeiro (Novo)
+### 🍅 Pomodoro Timer (Novo)
+* **Timer Foco/Descanso:** Cronômetro de 25 minutos de foco e 5 minutos de descanso fixo na barra lateral.
+* **Iniciar/Pausar/Reset:** Controle completo do timer a qualquer momento.
+* **Contador de Sessões:** Exibe quantos ciclos de foco foram concluídos (`🍅 N`).
+* **Notificações:** Alerta no navegador ao final de cada ciclo de foco ou descanso.
+* **Feedback Visual:** Timer muda de cor (verde = foco, azul = descanso) enquanto está rodando.
+
+### 📅 Calendário Integrado (Novo)
+* **Visão Unificada:** Exibe tarefas e transações financeiras em um único calendário mensal.
+* **Navegação:** Alterna entre meses e visualiza os eventos do dia.
+* **Links Rápidos:** Clique em uma tarefa ou transação no calendário para abrir seus detalhes.
+* **Página Dedicada:** Aba "📅 Calendário" na sidebar alterna para a visão completa do calendário.
+
+### 💰 Controle Financeiro
 * **Receitas e Despesas:** Registre entradas e saídas com descrição, valor, categoria e data.
 * **Resumo Financeiro:** Cards com total de receitas, despesas e saldo atual.
 * **Filtros Inteligentes:** Filtre transações por categoria (Alimentação, Transporte, Salário, etc.) e por mês.
@@ -38,6 +51,7 @@ Uma aplicação web completa para produtividade e finanças pessoais que combina
 * **Modo Escuro (Dark Mode):** Interface adaptada para ambientes de pouca luz.
 * **Menu Lateral Retrátil:** Em mobile, o menu vira uma "gaveta" oculta.
 * **Pesquisa em Tempo Real:** Filtra tarefas instantaneamente.
+* **Integração Total:** Calendário une tarefas e finanças; Pomodoro sempre acessível na sidebar.
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -45,8 +59,10 @@ Uma aplicação web completa para produtividade e finanças pessoais que combina
 * HTML5, CSS3, JavaScript (Vanilla)
 * [Bootstrap 5](https://getbootstrap.com/)
 * [SweetAlert2](https://sweetalert2.github.io/)
+* [FullCalendar 6](https://fullcalendar.io/) (Calendário Integrado)
 * [Canvas Confetti](https://github.com/catdad/canvas-confetti)
 * HTML `<canvas>` API (Contexto 2D)
+* Notification API (Pomodoro Timer)
 
 **Backend:**
 * C# .NET 10 (Minimal APIs)
