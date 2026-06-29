@@ -2,6 +2,8 @@ let tarefas = [];
 let termoPesquisa = "";
 let tarefaSelecionadaId = null;
 let paginaAtivaId = null;
+let calendar = null;
+let modoCalendario = false;
 
 const API_URL = "http://localhost:5152/tarefas";
 const API_URGENCIAS_URL = "http://localhost:5152/urgencias";
@@ -9,6 +11,7 @@ const API_TAGS_URL = "http://localhost:5152/tags";
 const API_SUBTAREFAS_URL = "http://localhost:5152/subtarefas";
 const API_NOTAS_URL = "http://localhost:5152/anotacoes";
 const API_TRANSACOES_URL = "http://localhost:5152/transacoes";
+const API_CALENDARIO_URL = "http://localhost:5152/calendario";
 
 let arrUrgencia = [];
 let arrTags = [];
@@ -265,17 +268,18 @@ function renderizarMenuLateral() {
     
     arrTags.forEach(tag => {
         const item = document.createElement("div");
-        item.className = `page-item ${tag.id === paginaAtivaId ? 'active' : ''}`;
+        item.className = `page-item ${tag.id === paginaAtivaId && !modoCalendario ? 'active' : ''}`;
         const spanNome = document.createElement("span");
         spanNome.textContent = `${tag.tipo === "financeiro" ? "💰" : "📄"} ${tag.nome}`;
         item.appendChild(spanNome);
         
-        if (tag.id === paginaAtivaId && tituloPaginaAtiva) {
+        if (tag.id === paginaAtivaId && tituloPaginaAtiva && !modoCalendario) {
             tituloPaginaAtiva.textContent = tag.nome;
         }
         
         item.addEventListener("click", () => {
             paginaAtivaId = tag.id;
+            modoCalendario = false;
             if (sidebarMenu && sidebarMenu.classList.contains("show")) {
                 alternarMenuMovel();
             }
@@ -289,6 +293,24 @@ function renderizarMenuLateral() {
         });
         listaPaginas.appendChild(item);
     });
+
+    const divCalendario = document.createElement("div");
+    divCalendario.className = `page-item ${modoCalendario ? 'active' : ''}`;
+    divCalendario.style.marginTop = "8px";
+    divCalendario.style.borderTop = "1px solid var(--border-color, #e3e5e8)";
+    divCalendario.style.paddingTop = "12px";
+    const spanCalendario = document.createElement("span");
+    spanCalendario.textContent = "📅 Calendário";
+    divCalendario.appendChild(spanCalendario);
+    divCalendario.addEventListener("click", () => {
+        modoCalendario = true;
+        if (sidebarMenu && sidebarMenu.classList.contains("show")) {
+            alternarMenuMovel();
+        }
+        renderizarMenuLateral();
+        mostrarCalendario();
+    });
+    listaPaginas.appendChild(divCalendario);
 }
 
 if (btnCriarPagina) {
@@ -1295,6 +1317,8 @@ if (switchDarkMode) {
 
 let transacoes = [];
 const financeiroContainer = document.getElementById("financeiroContainer");
+const calendarioContainer = document.getElementById("calendarioContainer");
+const calendarioView = document.getElementById("calendarioView");
 const kanbanContainer = document.querySelector(".kanban-container");
 const contadorTarefasEl = document.getElementById("contadorTarefas");
 const btnAbrirGaleriaNotasEl = document.getElementById("btnAbrirGaleriaNotas");
@@ -1322,6 +1346,7 @@ const btnLimparTransacoes = document.getElementById("btnLimparTransacoes");
 
 function mostrarKanban() {
     if (financeiroContainer) financeiroContainer.style.display = "none";
+    if (calendarioContainer) calendarioContainer.style.display = "none";
     if (kanbanContainer) kanbanContainer.style.display = "";
     if (contadorTarefasEl) contadorTarefasEl.style.display = "";
     if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "";
@@ -1329,10 +1354,15 @@ function mostrarKanban() {
     if (btnLimparTodasEl) btnLimparTodasEl.style.display = "";
     if (inputPesquisaEl) inputPesquisaEl.style.display = "";
     if (btnLimparTransacoes) btnLimparTransacoes.style.display = "none";
+    if (tituloPaginaAtiva) {
+        const tag = arrTags.find(t => t.id === paginaAtivaId);
+        if (tag) tituloPaginaAtiva.textContent = tag.nome;
+    }
 }
 
 function mostrarFinanceiro() {
     if (kanbanContainer) kanbanContainer.style.display = "none";
+    if (calendarioContainer) calendarioContainer.style.display = "none";
     if (financeiroContainer) financeiroContainer.style.display = "";
     if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
     if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
@@ -1340,6 +1370,10 @@ function mostrarFinanceiro() {
     if (btnLimparTodasEl) btnLimparTodasEl.style.display = "none";
     if (inputPesquisaEl) inputPesquisaEl.style.display = "none";
     if (btnLimparTransacoes) btnLimparTransacoes.style.display = "";
+    if (tituloPaginaAtiva) {
+        const tag = arrTags.find(t => t.id === paginaAtivaId);
+        if (tag) tituloPaginaAtiva.textContent = tag.nome;
+    }
     carregarTransacoes();
 }
 
@@ -1575,6 +1609,233 @@ if (formTransacao) {
             }
         });
     });
+}
+
+function mostrarCalendario() {
+    if (kanbanContainer) kanbanContainer.style.display = "none";
+    if (financeiroContainer) financeiroContainer.style.display = "none";
+    if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
+    if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
+    if (btnAbrirModalCriarEl) btnAbrirModalCriarEl.style.display = "none";
+    if (btnLimparTodasEl) btnLimparTodasEl.style.display = "none";
+    if (inputPesquisaEl) inputPesquisaEl.style.display = "none";
+    if (btnLimparTransacoes) btnLimparTransacoes.style.display = "none";
+    if (calendarioContainer) calendarioContainer.style.display = "";
+    if (tituloPaginaAtiva) tituloPaginaAtiva.textContent = "📅 Calendário";
+    carregarEventosCalendario();
+}
+
+function carregarEventosCalendario() {
+    fetch(API_CALENDARIO_URL)
+        .then(res => res.json())
+        .then(eventos => {
+            const eventosAjustados = eventos.map(ev => {
+                if (ev.type === 'tarefa' && ev.concluida) {
+                    return { ...ev, color: '#9ca3af', textColor: '#ffffff' };
+                }
+                return ev;
+            });
+            if (!calendar) {
+                inicializarCalendario(eventosAjustados);
+            } else {
+                calendar.removeAllEvents();
+                eventosAjustados.forEach(ev => calendar.addEvent(ev));
+            }
+        })
+        .catch(err => console.error(err));
+}
+
+function inicializarCalendario(eventosIniciais) {
+    if (!calendarioView) return;
+    if (calendar) {
+        calendar.destroy();
+        calendar = null;
+    }
+
+    calendar = new FullCalendar.Calendar(calendarioView, {
+        initialView: 'dayGridMonth',
+        locale: 'pt-br',
+        firstDay: 0,
+        height: 'auto',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,dayGridWeek,listMonth'
+        },
+        buttonText: {
+            today: 'Hoje',
+            month: 'Mês',
+            week: 'Semana',
+            list: 'Lista'
+        },
+        events: eventosIniciais,
+        eventClick: function(info) {
+            const ev = info.event;
+            if (ev.extendedProps.type === 'tarefa') {
+                const tarefa = tarefas.find(t => t.id === parseInt(ev.id.replace('task-', '')));
+                if (tarefa) {
+                    const u = arrUrgencia.find(u => u.id === tarefa.urgenciaId) || { cor: "#6c757d", descricao: "Padrão" };
+                    if (verTarefaTitulo) verTarefaTitulo.textContent = tarefa.texto;
+                    if (verTarefaDataInicio) verTarefaDataInicio.textContent = formatarDataBR(tarefa.dataInicio);
+                    if (verTarefaDataFim) verTarefaDataFim.textContent = formatarDataBR(tarefa.dataFim, true);
+                    if (verTarefaDescricao) verTarefaDescricao.textContent = tarefa.descricao || "Sem descrição.";
+                    if (verTarefaUrgenciaBadge) {
+                        verTarefaUrgenciaBadge.textContent = u.descricao;
+                        verTarefaUrgenciaBadge.style.backgroundColor = u.cor;
+                    }
+                    tarefaSelecionadaId = tarefa.id;
+                    renderizarSubtarefas(tarefa.subtarefas);
+                    new bootstrap.Modal(document.getElementById('modalVerTarefa')).show();
+                }
+            } else if (ev.extendedProps.type === 'transacao') {
+                Swal.fire({
+                    title: ev.title,
+                    html: `
+                        <div style="text-align: left;">
+                            <p><strong>Categoria:</strong> ${ev.extendedProps.categoria}</p>
+                            <p><strong>Tipo:</strong> ${ev.extendedProps.tipo}</p>
+                            <p><strong>Valor:</strong> ${formatarMoeda(ev.extendedProps.valor)}</p>
+                            <p><strong>Data:</strong> ${formatarDataBRT(ev.startStr)}</p>
+                            <p><strong>Página:</strong> ${ev.extendedProps.tagNome}</p>
+                        </div>
+                    `,
+                    icon: ev.extendedProps.tipo === 'Receita' ? 'success' : 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        },
+        eventDidMount: function(info) {
+            const el = info.el;
+            const tipo = info.event.extendedProps.type;
+            if (tipo === 'tarefa') {
+                el.style.borderLeft = '4px solid rgba(255,255,255,0.5)';
+            } else if (tipo === 'transacao') {
+                el.style.borderLeft = '4px solid rgba(255,255,255,0.7)';
+            }
+            const titleEl = el.querySelector('.fc-event-title');
+            if (titleEl) {
+                titleEl.style.fontSize = '0.8rem';
+                titleEl.style.fontWeight = '600';
+            }
+        },
+        loading: function(isLoading) {
+            if (!isLoading) {
+                document.querySelectorAll('.fc-event').forEach(el => {
+                    el.style.cursor = 'pointer';
+                });
+            }
+        }
+    });
+
+    calendar.render();
+}
+
+// ===== Pomodoro Timer =====
+const POMODORO_FOCUS = 25 * 60;
+const POMODORO_BREAK = 5 * 60;
+
+let pomodoroTimeLeft = POMODORO_FOCUS;
+let pomodoroRunning = false;
+let pomodoroFocus = true;
+let pomodoroSessions = 0;
+let pomodoroInterval = null;
+
+const pomodoroDisplay = document.getElementById("pomodoroDisplay");
+const pomodoroPhase = document.getElementById("pomodoroPhase");
+const pomodoroStartBtn = document.getElementById("pomodoroStartBtn");
+const pomodoroResetBtn = document.getElementById("pomodoroResetBtn");
+const pomodoroSessionsEl = document.getElementById("pomodoroSessions");
+
+function pomodoroFormatTime(secs) {
+    const m = String(Math.floor(secs / 60)).padStart(2, "0");
+    const s = String(secs % 60).padStart(2, "0");
+    return `${m}:${s}`;
+}
+
+function pomodoroUpdateDisplay() {
+    if (pomodoroDisplay) {
+        pomodoroDisplay.textContent = pomodoroFormatTime(pomodoroTimeLeft);
+    }
+    if (pomodoroPhase) {
+        pomodoroPhase.textContent = pomodoroFocus ? "Foco" : "Descanso";
+    }
+    if (pomodoroSessionsEl) {
+        pomodoroSessionsEl.textContent = `🍅 ${pomodoroSessions}`;
+    }
+    if (pomodoroDisplay) {
+        pomodoroDisplay.className = "pomodoro-timer" +
+            (pomodoroRunning ? " running" : "") +
+            (!pomodoroFocus ? " break" : "");
+    }
+}
+
+function pomodoroStart() {
+    if (pomodoroRunning) return;
+    pomodoroRunning = true;
+    if (pomodoroStartBtn) pomodoroStartBtn.textContent = "⏸ Pausar";
+    pomodoroInterval = setInterval(() => {
+        pomodoroTimeLeft--;
+        pomodoroUpdateDisplay();
+        if (pomodoroTimeLeft <= 0) {
+            pomodoroStop();
+            if (pomodoroFocus) {
+                pomodoroSessions++;
+                pomodoroFocus = false;
+                pomodoroTimeLeft = POMODORO_BREAK;
+                pomodoroUpdateDisplay();
+                if (Notification.permission === "granted") {
+                    new Notification("Pomodoro", { body: "Descanso! Hora de pausar por 5 minutos." });
+                }
+            } else {
+                pomodoroFocus = true;
+                pomodoroTimeLeft = POMODORO_FOCUS;
+                pomodoroUpdateDisplay();
+                if (Notification.permission === "granted") {
+                    new Notification("Pomodoro", { body: "Foco! Hora de trabalhar por 25 minutos." });
+                }
+            }
+            if (pomodoroStartBtn) pomodoroStartBtn.textContent = "▶ Iniciar";
+            pomodoroRunning = false;
+        }
+    }, 1000);
+    pomodoroUpdateDisplay();
+}
+
+function pomodoroStop() {
+    if (pomodoroInterval) {
+        clearInterval(pomodoroInterval);
+        pomodoroInterval = null;
+    }
+    pomodoroRunning = false;
+    if (pomodoroStartBtn) pomodoroStartBtn.textContent = "▶ Iniciar";
+}
+
+function pomodoroReset() {
+    pomodoroStop();
+    pomodoroFocus = true;
+    pomodoroTimeLeft = POMODORO_FOCUS;
+    pomodoroUpdateDisplay();
+}
+
+if (pomodoroStartBtn) {
+    pomodoroStartBtn.addEventListener("click", () => {
+        if (pomodoroRunning) {
+            pomodoroStop();
+            pomodoroUpdateDisplay();
+        } else {
+            pomodoroStart();
+        }
+    });
+}
+
+if (pomodoroResetBtn) {
+    pomodoroResetBtn.addEventListener("click", pomodoroReset);
+}
+
+pomodoroUpdateDisplay();
+
+if (Notification.permission === "default") {
+    Notification.requestPermission();
 }
 
 inicializarSistema();

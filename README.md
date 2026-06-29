@@ -1,12 +1,20 @@
-# 🚀 Workspace To-Do & Digital Notes
+# 🚀 Workspace To-Do, Digital Notes & Finance
 
-Uma aplicação web completa para gestão de produtividade que combina um sistema de **Quadro Kanban** avançado com um **Bloco de Notas Digital** nativo, suportando múltiplas páginas e escrita à mão (com mouse, toque ou canetas digitais como a S-Pen).
+Uma aplicação web completa para produtividade e finanças pessoais que combina **Quadro Kanban**, **Bloco de Notas Digital** e **Controle Financeiro**, suportando múltiplas páginas e escrita à mão.
 
 ## ✨ Funcionalidades Principais
 
+### 💰 Controle Financeiro (Novo)
+* **Receitas e Despesas:** Registre entradas e saídas com descrição, valor, categoria e data.
+* **Resumo Financeiro:** Cards com total de receitas, despesas e saldo atual.
+* **Filtros Inteligentes:** Filtre transações por categoria (Alimentação, Transporte, Salário, etc.) e por mês.
+* **Categorias Pré-definidas:** Alimentação, Transporte, Moradia, Saúde, Educação, Lazer, Salário, Investimento, Outros.
+* **Formatação BRL:** Valores exibidos no formato monetário brasileiro (R$).
+* **Página Dedicada:** A aba "💰 Financeiro" na sidebar alterna automaticamente para a visão financeira.
+
 ### 📋 Gestão de Tarefas (Kanban)
 * **Organização por Páginas/Tags:** Cria diferentes espaços de trabalho (ex: Faculdade, Trabalho, Casa).
-* **Quadro Interativo:** Move as tarefas entre "A Fazer", "Em Andamento" e "Concluído".
+* **Quadro Interativo:** Move as tarefas entre "A Fazer", "Em Andamento" e "Concluído" facilmente arrastando e soltando (Drag & Drop).
 * **Prazos Automáticos:** O sistema calcula automaticamente a data final com base no Grau de Urgência (Imediato, Muito Urgente, Urgente, Pouco Urgente, Não Urgente).
 * **Subtarefas (Checklists):** Adiciona passos menores dentro de uma tarefa principal e acompanha o progresso.
 * **Alertas Visuais:** As tarefas atrasadas ou a expirar no próprio dia piscam e recebem etiquetas de alerta automático.
@@ -14,38 +22,78 @@ Uma aplicação web completa para gestão de produtividade que combina um sistem
 
 ### 📝 Bloco de Notas Digital (Estilo Samsung Notes/Notion)
 * **Canvas Interativo:** Desenha e escreve à mão com suporte nativo a `PointerEvents` (ideal para ecrãs táteis e stylus/S-Pen).
+* **Textos Editáveis:** Digite pelo teclado utilizando uma ferramenta de texto flutuante. Altere fontes, tamanhos e cores.
+* **Ferramentas de Escrita:**
+  * **Caneta:** Traços dinâmicos com espessura e cores variáveis.
+  * **Marca-Texto:** Traço chanfrado e translúcido que passa por trás dos textos sem borrar.
+  * **Borracha:** Apaga com precisão os traços feitos.
+* **Desfazer/Refazer (Undo/Redo):** Controle total com botões ou atalhos (`Ctrl+Z` / `Ctrl+Y`).
 * **Múltiplas Páginas:** Cria cadernos inteiros dentro de uma única nota.
-* **Tipos de Folha:** Escolhe entre folha em branco, pautada, quadriculada ou pontilhada.
-* **Personalização de Traço:** Altera a cor, espessura e utiliza borracha.
-* **Visualização Ágil:** Visualiza as tuas notas através de uma galeria e navega pelas páginas sem precisar de as abrir para edição.
+* **Tipos de Folha:** Em branco, pautada, quadriculada ou pontilhada.
+* **Exportação:** Baixa a nota como imagem `.png` mesclando fundo, desenhos e textos.
 
 ### 📱 Interface e Experiência (UI/UX)
-* **Design Responsivo:** O layout adapta-se perfeitamente a telemóveis, tablets e computadores.
-* **Modo Escuro (Dark Mode) Nativo:** Interface inteligentemente adaptada para ambientes de pouca luz, garantindo alto contraste e legibilidade perfeita para textos secundários, prazos, checklists e ícones (com inversão dinâmica de cores).
-* **Menu Lateral Retrátil:** Num telemóvel, o menu transforma-se numa "gaveta" oculta para maximizar o espaço de ecrã.
-* **Pesquisa em Tempo Real:** Encontra rapidamente tarefas pendentes ou concluídas.
+* **Design Responsivo:** Adapta-se a telemóveis, tablets e computadores.
+* **Tooltips nativos:** Botões com balões flutuantes descritivos.
+* **Modo Escuro (Dark Mode):** Interface adaptada para ambientes de pouca luz.
+* **Menu Lateral Retrátil:** Em mobile, o menu vira uma "gaveta" oculta.
+* **Pesquisa em Tempo Real:** Filtra tarefas instantaneamente.
 
 ## 🛠️ Tecnologias Utilizadas
 
 **Frontend:**
 * HTML5, CSS3, JavaScript (Vanilla)
-* [Bootstrap 5](https://getbootstrap.com/) (Componentes e Sistema de Grelha)
-* [SweetAlert2](https://sweetalert2.github.io/) (Pop-ups e Alertas bonitos)
-* [Canvas Confetti](https://github.com/catdad/canvas-confetti) (Animação de sucesso)
-* HTML `<canvas>` API
+* [Bootstrap 5](https://getbootstrap.com/)
+* [SweetAlert2](https://sweetalert2.github.io/)
+* [Canvas Confetti](https://github.com/catdad/canvas-confetti)
+* HTML `<canvas>` API (Contexto 2D)
 
 **Backend:**
-* C# .NET 8 (Minimal APIs)
+* C# .NET 10 (Minimal APIs)
 * Entity Framework Core (ORM)
 * SQLite (Base de Dados Embutida)
 
 ## 🚀 Como Executar o Projeto Localmente
 
 ### Pré-requisitos
-* [.NET 8 SDK](https://dotnet.microsoft.com/download) instalado na tua máquina.
-* Um navegador web moderno.
+* [.NET 10 SDK](https://dotnet.microsoft.com/download)
+* Navegador web moderno
 
 ### Passos
-1. Clona este repositório:
+1. Clone o repositório:
 ```bash
-   git clone [https://github.com/teu-utilizador/nome-do-repositorio.git](https://github.com/teu-utilizador/nome-do-repositorio.git)
+git clone <url-do-repositorio>
+cd workspace-todo-app
+```
+
+2. Execute a API:
+```bash
+cd TodoApi
+dotnet run
+```
+
+3. Abra o frontend:
+   - Use o Live Server no VS Code para abrir `TodoApi/wwwroot/indexx.html`
+   - Ou acesse diretamente pelo navegador o arquivo
+
+4. A API roda em `http://localhost:5152`
+
+## 📊 Estrutura do Projeto
+
+```
+TodoApi/
+├── Program.cs              # Minimal API endpoints
+├── AppDbContext.cs          # EF Core DbContext + seed data
+├── Models/
+│   ├── Tarefa.cs
+│   ├── Subtarefa.cs
+│   ├── Urgencia.cs
+│   ├── Tag.cs              # Páginas com tipo (kanban/financeiro)
+│   ├── Anotacao.cs
+│   └── TransacaoFinanceira.cs
+├── Migrations/
+└── wwwroot/
+    ├── indexx.html          # Frontend SPA
+    ├── todo2.js             # Lógica JavaScript
+    └── content/CSS/style.css
+```

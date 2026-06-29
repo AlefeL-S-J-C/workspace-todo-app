@@ -289,4 +289,58 @@ app.MapDelete("/transacoes/todas/{tagId}", async (int tagId, AppDbContext db) =>
     return Results.Ok();
 });
 
+app.MapGet("/calendario", async (AppDbContext db) =>
+{
+    var tarefas = await db.Tarefas
+        .Include(t => t.Urgencia)
+        .Include(t => t.Tag)
+        .ToListAsync();
+
+    var transacoes = await db.TransacoesFinanceiras
+        .Include(t => t.Tag)
+        .ToListAsync();
+
+    var eventos = new List<object>();
+
+    foreach (var t in tarefas)
+    {
+        var cor = t.Concluida ? "#6c757d" : (t.Urgencia?.Cor ?? "#6c757d");
+        eventos.Add(new
+        {
+            id = $"task-{t.Id}",
+            title = t.Texto,
+            start = t.DataInicio,
+            end = t.DataFim,
+            color = cor,
+            textColor = "#ffffff",
+            type = "tarefa",
+            status = t.Status ?? "A Fazer",
+            concluida = t.Concluida,
+            tagNome = t.Tag?.Nome ?? "",
+            tagCor = t.Tag?.Cor ?? ""
+        });
+    }
+
+    foreach (var tr in transacoes)
+    {
+        var cor = tr.Tipo == "Receita" ? "#22c55e" : "#ef4444";
+        eventos.Add(new
+        {
+            id = $"trans-{tr.Id}",
+            title = $"{tr.Tipo}: {tr.Descricao}",
+            start = tr.Data,
+            color = cor,
+            textColor = "#ffffff",
+            type = "transacao",
+            valor = tr.Valor,
+            categoria = tr.Categoria,
+            tipo = tr.Tipo,
+            tagNome = tr.Tag?.Nome ?? "",
+            tagCor = tr.Tag?.Cor ?? ""
+        });
+    }
+
+    return Results.Ok(eventos);
+});
+
 app.Run();

@@ -559,3 +559,246 @@ body.dark-mode .financeiro-tabela td {
 body.dark-mode .financeiro-tabela thead {
     background-color: var(--bg-hover) !important;
 }
+
+.calendario-container {
+    overflow-y: auto;
+    flex: 1;
+}
+
+#calendarioView {
+    min-height: 500px;
+    background: var(--bg-card, #ffffff);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid var(--border-color, #e3e5e8);
+}
+
+.fc {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main, #1e293b);
+}
+
+.fc .fc-button {
+    border-radius: 8px !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border: 1px solid var(--border-color, #ced4da);
+    background-color: var(--bg-card, #ffffff);
+    color: var(--text-main, #1e293b);
+    transition: all 0.2s ease;
+}
+
+.fc .fc-button:hover {
+    background-color: var(--bg-hover, #e3e5e8);
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+.fc .fc-button-primary:disabled {
+    opacity: 0.5;
+}
+
+.fc .fc-daygrid-day-number {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main, #1e293b);
+    padding: 4px 8px;
+}
+
+.fc .fc-col-header-cell-cushion {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    padding: 8px 0;
+    text-decoration: none;
+}
+
+.fc .fc-daygrid-day-top {
+    flex-direction: row;
+}
+
+.fc .fc-daygrid-day-frame {
+    min-height: 80px;
+}
+
+.fc .fc-day-today {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+}
+
+.fc .fc-day-other .fc-daygrid-day-number {
+    opacity: 0.4;
+}
+
+.fc .fc-event {
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    border: none;
+    margin-bottom: 2px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.fc .fc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.fc .fc-more-link {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #3b82f6;
+}
+
+.fc .fc-list-day-cushion {
+    background-color: var(--bg-hover, #f1f5f9) !important;
+}
+
+.fc .fc-list-table td,
+.fc .fc-list-table th {
+    border-color: var(--border-color, #e3e5e8) !important;
+    color: var(--text-main, #1e293b);
+}
+
+.fc .fc-list-event-title {
+    font-weight: 500;
+}
+
+body.dark-mode .fc {
+    color: var(--text-main, #ffffff);
+}
+
+body.dark-mode #calendarioView {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .fc .fc-button {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .fc .fc-button:hover {
+    background-color: var(--bg-hover);
+}
+
+body.dark-mode .fc .fc-non-business {
+    background-color: transparent;
+}
+
+body.dark-mode .fc .fc-day-today {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+body.dark-mode .fc .fc-scrollgrid {
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .fc th,
+body.dark-mode .fc td {
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .fc .fc-list-event:hover td {
+    background-color: var(--bg-hover) !important;
+}
+
+body.dark-mode .fc .fc-list-day-cushion {
+    background-color: var(--bg-hover) !important;
+}
+
+body.dark-mode .fc .fc-popover {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .fc .fc-popover-title {
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .fc .fc-more-popover .fc-daygrid-more-popover {
+    background-color: var(--bg-card) !important;
+}
+
+.pomodoro-widget {
+    border-top: 1px solid var(--border-color, #e3e5e8);
+    margin-top: 8px;
+    padding-top: 12px !important;
+    text-align: center;
+    user-select: none;
+}
+
+.pomodoro-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.pomodoro-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted, #5c5f62);
+}
+
+.pomodoro-timer {
+    font-size: 1.8rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main, #37352f);
+    line-height: 1.2;
+    letter-spacing: 1px;
+}
+
+.pomodoro-timer.running {
+    color: #22c55e;
+}
+
+.pomodoro-timer.break {
+    color: #3b82f6;
+}
+
+.pomodoro-phase {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted, #6b7280);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pomodoro-controls {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.pomodoro-controls .btn {
+    padding: 4px 12px !important;
+    font-size: 0.75rem !important;
+    border-radius: 8px !important;
+}
+
+.pomodoro-sessions {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted, #6b7280);
+}
