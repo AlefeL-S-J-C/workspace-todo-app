@@ -12,6 +12,9 @@ namespace TodoApi
         public DbSet<Subtarefa> Subtarefas { get; set; }
         public DbSet<Anotacao> Anotacoes { get; set; }
         public DbSet<TransacaoFinanceira> TransacoesFinanceiras { get; set; }
+        public DbSet<Habito> Habitos { get; set; }
+        public DbSet<RegistroHabito> RegistroHabitos { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -46,6 +49,19 @@ namespace TodoApi
                 .HasForeignKey(t => t.TagId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Habito>()
+                .HasOne(h => h.Tag)
+                .WithMany()
+                .HasForeignKey(h => h.TagId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RegistroHabito>()
+                .HasOne(r => r.Habito)
+                .WithMany(h => h.Registros)
+                .HasForeignKey(r => r.HabitoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Urgencia>().HasData(
                 new Urgencia { Id = 1, Descricao = "Não Urgente", Prazo = "24 dias", Cor = "#007bff", Classe = "bg-primary" },
                 new Urgencia { Id = 2, Descricao = "Pouco Urgente", Prazo = "12 dias", Cor = "#198754", Classe = "bg-success" },
@@ -57,10 +73,10 @@ namespace TodoApi
             modelBuilder.Entity<Tag>().HasData(
                 new Tag { Id = 1, Nome = "Trabalho", Cor = "#6366f1", Tipo = "kanban" },
                 new Tag { Id = 2, Nome = "Estudos", Cor = "#a855f7", Tipo = "kanban" },
-                new Tag { Id = 3, Nome = "Pessoal", Cor = "#ec4899", Tipo = "kanban" },
-                new Tag { Id = 4, Nome = "Casa", Cor = "#14b8a6", Tipo = "kanban" },
-                new Tag { Id = 5, Nome = "Financeiro", Cor = "#22c55e", Tipo = "financeiro" }
-
+                new Tag { Id = 3, Nome = "Faculdade", Cor = "#3b82f6", Tipo = "kanban" },
+                new Tag { Id = 4, Nome = "Pessoal", Cor = "#ec4899", Tipo = "kanban" },
+                new Tag { Id = 5, Nome = "Casa", Cor = "#14b8a6", Tipo = "kanban" },
+                new Tag { Id = 6, Nome = "Financeiro", Cor = "#22c55e", Tipo = "financeiro" }
             );
         }
     }

@@ -10,8 +10,8 @@ using TodoApi;
 namespace TodoApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260622192639_AdicionarFinanceiro")]
-    partial class AdicionarFinanceiro
+    [Migration("20260701181453_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,12 +25,20 @@ namespace TodoApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Conteudo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ImagemBase64")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("TagId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("TipoFolha")
                         .IsRequired()
@@ -45,6 +53,53 @@ namespace TodoApi.Migrations
                     b.HasIndex("TagId");
 
                     b.ToTable("Anotacoes");
+                });
+
+            modelBuilder.Entity("TodoApi.Habito", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Cor")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("TagId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("Habitos");
+                });
+
+            modelBuilder.Entity("TodoApi.RegistroHabito", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Concluido")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("HabitoId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HabitoId");
+
+                    b.ToTable("RegistroHabitos");
                 });
 
             modelBuilder.Entity("TodoApi.Subtarefa", b =>
@@ -110,20 +165,27 @@ namespace TodoApi.Migrations
                         new
                         {
                             Id = 3,
+                            Cor = "#3b82f6",
+                            Nome = "Faculdade",
+                            Tipo = "kanban"
+                        },
+                        new
+                        {
+                            Id = 4,
                             Cor = "#ec4899",
                             Nome = "Pessoal",
                             Tipo = "kanban"
                         },
                         new
                         {
-                            Id = 4,
+                            Id = 5,
                             Cor = "#14b8a6",
                             Nome = "Casa",
                             Tipo = "kanban"
                         },
                         new
                         {
-                            Id = 5,
+                            Id = 6,
                             Cor = "#22c55e",
                             Nome = "Financeiro",
                             Tipo = "financeiro"
@@ -162,7 +224,7 @@ namespace TodoApi.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UrgenciaId")
+                    b.Property<int?>("UrgenciaId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -289,6 +351,27 @@ namespace TodoApi.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("TodoApi.Habito", b =>
+                {
+                    b.HasOne("TodoApi.Tag", "Tag")
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("TodoApi.RegistroHabito", b =>
+                {
+                    b.HasOne("TodoApi.Habito", "Habito")
+                        .WithMany("Registros")
+                        .HasForeignKey("HabitoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Habito");
+                });
+
             modelBuilder.Entity("TodoApi.Subtarefa", b =>
                 {
                     b.HasOne("TodoApi.Tarefa", "Tarefa")
@@ -324,6 +407,11 @@ namespace TodoApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("TodoApi.Habito", b =>
+                {
+                    b.Navigation("Registros");
                 });
 
             modelBuilder.Entity("TodoApi.Tarefa", b =>

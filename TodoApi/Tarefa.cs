@@ -11,7 +11,7 @@ namespace TodoApi
         public string DataInicio { get; set; } = string.Empty;
         public string DataFim { get; set; } = string.Empty;
         public string Descricao { get; set; } = string.Empty;
-        public int UrgenciaId { get; set; }
+        public int? UrgenciaId { get; set; }
         public Urgencia? Urgencia { get; set; }
         public int? TagId { get; set; }
         public Tag? Tag { get; set; }

@@ -12,6 +12,10 @@ const API_SUBTAREFAS_URL = "http://localhost:5152/subtarefas";
 const API_NOTAS_URL = "http://localhost:5152/anotacoes";
 const API_TRANSACOES_URL = "http://localhost:5152/transacoes";
 const API_CALENDARIO_URL = "http://localhost:5152/calendario";
+const API_HABITOS_URL = "http://localhost:5152/habitos";
+const API_REGISTROS_URL = "http://localhost:5152/registros-habitos";
+const API_IA_DIVIDIR_URL = "http://localhost:5152/ia/dividir-tarefa";
+const API_IA_RESUMIR_URL = "http://localhost:5152/ia/resumir-nota";
 
 let arrUrgencia = [];
 let arrTags = [];
@@ -19,6 +23,12 @@ let arrTags = [];
 let notaEditandoId = null;
 let paginasDaNota = [""];
 let paginaAtualIndex = 0;
+let quillCriar = null;
+let quillEditar = null;
+let quillNota = null;
+let notaQuillEditandoId = null;
+let habitos = [];
+let modoHabitos = false;
 
 const formModalTarefa = document.getElementById("formModalTarefa");
 const inputTituloModal = document.getElementById("inputTituloModal");
@@ -311,6 +321,25 @@ function renderizarMenuLateral() {
         mostrarCalendario();
     });
     listaPaginas.appendChild(divCalendario);
+
+    const divHabitos = document.createElement("div");
+    divHabitos.className = `page-item ${modoHabitos ? 'active' : ''}`;
+    divHabitos.style.marginTop = "4px";
+    divHabitos.style.borderTop = "1px solid var(--border-color, #e3e5e8)";
+    divHabitos.style.paddingTop = "8px";
+    const spanHabitos = document.createElement("span");
+    spanHabitos.textContent = "📊 Hábitos";
+    divHabitos.appendChild(spanHabitos);
+    divHabitos.addEventListener("click", () => {
+        modoHabitos = true;
+        modoCalendario = false;
+        if (sidebarMenu && sidebarMenu.classList.contains("show")) {
+            alternarMenuMovel();
+        }
+        renderizarMenuLateral();
+        mostrarHabitos();
+    });
+    listaPaginas.appendChild(divHabitos);
 }
 
 if (btnCriarPagina) {
@@ -1345,8 +1374,11 @@ const btnNovaTransacao = document.getElementById("btnNovaTransacao");
 const btnLimparTransacoes = document.getElementById("btnLimparTransacoes");
 
 function mostrarKanban() {
+    modoHabitos = false;
+    modoCalendario = false;
     if (financeiroContainer) financeiroContainer.style.display = "none";
     if (calendarioContainer) calendarioContainer.style.display = "none";
+    if (habitosContainer) habitosContainer.style.display = "none";
     if (kanbanContainer) kanbanContainer.style.display = "";
     if (contadorTarefasEl) contadorTarefasEl.style.display = "";
     if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "";
@@ -1361,8 +1393,11 @@ function mostrarKanban() {
 }
 
 function mostrarFinanceiro() {
+    modoHabitos = false;
+    modoCalendario = false;
     if (kanbanContainer) kanbanContainer.style.display = "none";
     if (calendarioContainer) calendarioContainer.style.display = "none";
+    if (habitosContainer) habitosContainer.style.display = "none";
     if (financeiroContainer) financeiroContainer.style.display = "";
     if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
     if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
@@ -1612,8 +1647,10 @@ if (formTransacao) {
 }
 
 function mostrarCalendario() {
+    modoHabitos = false;
     if (kanbanContainer) kanbanContainer.style.display = "none";
     if (financeiroContainer) financeiroContainer.style.display = "none";
+    if (habitosContainer) habitosContainer.style.display = "none";
     if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
     if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
     if (btnAbrirModalCriarEl) btnAbrirModalCriarEl.style.display = "none";
@@ -1836,6 +1873,429 @@ pomodoroUpdateDisplay();
 
 if (Notification.permission === "default") {
     Notification.requestPermission();
+}
+
+// ===== Quill Editor Initialization =====
+const quillEditorDescricao = document.getElementById("quillEditorDescricao");
+const quillEditorEditarDescricao = document.getElementById("quillEditorEditarDescricao");
+const quillEditorNota = document.getElementById("quillEditor");
+const btnNovaNotaTexto = document.getElementById("btnNovaNotaTexto");
+const btnSalvarNotaQuill = document.getElementById("btnSalvarNotaQuill");
+const btnResumirNotaIA = document.getElementById("btnResumirNotaIA");
+const btnDividirTarefaIAEditar = document.getElementById("btnDividirTarefaIAEditar");
+const inputTituloQuill = document.getElementById("inputTituloQuill");
+const habitosContainer = document.getElementById("habitosContainer");
+const habitosGrid = document.getElementById("habitosGrid");
+const habTotal = document.getElementById("habTotal");
+const habHoje = document.getElementById("habHoje");
+const habSequencia = document.getElementById("habSequencia");
+const btnMapaGeralHabitosPage = document.getElementById("btnMapaGeralHabitosPage");
+const contribuicaoGraf = document.getElementById("contribuicaoGraf");
+const contadorSequencia = document.getElementById("contadorSequencia");
+
+if (quillEditorDescricao) {
+    quillCriar = new Quill(quillEditorDescricao, {
+        theme: 'snow',
+        placeholder: 'Descreva sua tarefa...',
+        modules: { toolbar: [['bold','italic','underline','strike'],[{list:'ordered'},{list:'bullet'}],['link','code-block'],['clean']] }
+    });
+}
+
+if (quillEditorEditarDescricao) {
+    quillEditar = new Quill(quillEditorEditarDescricao, {
+        theme: 'snow',
+        placeholder: 'Descreva sua tarefa...',
+        modules: { toolbar: [['bold','italic','underline','strike'],[{list:'ordered'},{list:'bullet'}],['link','code-block'],['clean']] }
+    });
+}
+
+if (quillEditorNota) {
+    quillNota = new Quill(quillEditorNota, {
+        theme: 'snow',
+        placeholder: 'Escreva sua nota...',
+        modules: { toolbar: [['bold','italic','underline','strike'],[{header:[1,2,3,false]}],[{list:'ordered'},{list:'bullet'}],['link','code-block','blockquote'],[{color:[]},{background:[]}],['clean']] }
+    });
+}
+
+// Clear Quill when create task modal opens
+const modalCriarTarefa = document.getElementById("modalCriarTarefa");
+if (modalCriarTarefa) {
+    modalCriarTarefa.addEventListener('show.bs.modal', () => {
+        if (quillCriar) quillCriar.root.innerHTML = '';
+    });
+}
+
+// Reset Quill note modal state
+const modalQuillEditor = document.getElementById("modalQuillEditor");
+if (modalQuillEditor) {
+    modalQuillEditor.addEventListener('show.bs.modal', () => {
+        if (quillNota) quillNota.root.innerHTML = '';
+        if (inputTituloQuill) inputTituloQuill.value = '';
+        notaQuillEditandoId = null;
+    });
+}
+
+// ===== Save Quill Note =====
+if (btnSalvarNotaQuill) {
+    btnSalvarNotaQuill.addEventListener('click', () => {
+        if (!paginaAtivaId) {
+            Swal.fire("Atenção", "Selecione uma página primeiro!", "warning");
+            return;
+        }
+        const titulo = inputTituloQuill ? inputTituloQuill.value.trim() : '';
+        if (!titulo) {
+            Swal.fire("Atenção", "Digite um título para a nota.", "warning");
+            return;
+        }
+        const conteudo = quillNota ? quillNota.root.innerHTML : '';
+        if (!conteudo || conteudo === '<p><br></p>') {
+            Swal.fire("Atenção", "Escreva algum conteúdo na nota.", "warning");
+            return;
+        }
+        const dados = { titulo, conteudo, tipo: "quill", tagId: paginaAtivaId };
+        const request = notaQuillEditandoId
+            ? fetch(`${API_NOTAS_URL}/${notaQuillEditandoId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) })
+            : fetch(API_NOTAS_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) });
+        request.then(() => {
+            bootstrap.Modal.getInstance(modalQuillEditor).hide();
+            Swal.fire("Sucesso", "Nota salva com sucesso!", "success");
+        }).catch(err => console.error(err));
+    });
+}
+
+// ===== Nova Nota de Texto button =====
+if (btnNovaNotaTexto) {
+    btnNovaNotaTexto.addEventListener('click', () => {
+        if (!paginaAtivaId) {
+            Swal.fire("Atenção", "Selecione uma página primeiro!", "warning");
+            return;
+        }
+        if (quillNota) quillNota.root.innerHTML = '';
+        if (inputTituloQuill) inputTituloQuill.value = '';
+        notaQuillEditandoId = null;
+    });
+}
+
+// ===== IA: Dividir Tarefa =====
+if (btnDividirTarefaIAEditar) {
+    btnDividirTarefaIAEditar.addEventListener('click', () => {
+        const titulo = inputEditarTitulo ? inputEditarTitulo.value.trim() : '';
+        if (!titulo) {
+            Swal.fire("Atenção", "Digite o nome da tarefa primeiro.", "warning");
+            return;
+        }
+        btnDividirTarefaIAEditar.disabled = true;
+        btnDividirTarefaIAEditar.textContent = "🤖 Gerando...";
+        fetch(API_IA_DIVIDIR_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ texto: titulo })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.subtarefas && data.subtarefas.length > 0) {
+                const listaSub = document.getElementById("listaSubtarefas");
+                if (listaSub) {
+                    listaSub.innerHTML = '';
+                    data.subtarefas.forEach(texto => {
+                        const li = document.createElement("li");
+                        li.className = "list-group-item d-flex align-items-center gap-2";
+                        li.innerHTML = `<input class="form-check-input subtarefa-check" type="checkbox"> <span>${texto}</span>`;
+                        listaSub.appendChild(li);
+                    });
+                    Swal.fire("Pronto!", `${data.subtarefas.length} subtarefas geradas pela IA.`, "success");
+                }
+            }
+        })
+        .catch(err => console.error(err))
+        .finally(() => {
+            btnDividirTarefaIAEditar.disabled = false;
+            btnDividirTarefaIAEditar.textContent = "🤖 Dividir Tarefa com IA";
+        });
+    });
+}
+
+// ===== IA: Resumir Nota =====
+if (btnResumirNotaIA) {
+    btnResumirNotaIA.addEventListener('click', () => {
+        const conteudo = quillNota ? quillNota.root.innerText.trim() : '';
+        if (!conteudo) {
+            Swal.fire("Atenção", "Escreva algum conteúdo na nota primeiro.", "warning");
+            return;
+        }
+        btnResumirNotaIA.disabled = true;
+        btnResumirNotaIA.textContent = "🤖 Resumindo...";
+        fetch(API_IA_RESUMIR_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conteudo })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.resumo) {
+                Swal.fire("Resumo", data.resumo, "info");
+            }
+        })
+        .catch(err => console.error(err))
+        .finally(() => {
+            btnResumirNotaIA.disabled = false;
+            btnResumirNotaIA.textContent = "🤖 Resumir com IA";
+        });
+    });
+}
+
+// ===== Hábitos System =====
+function mostrarHabitos() {
+    modoHabitos = true;
+    if (kanbanContainer) kanbanContainer.style.display = "none";
+    if (financeiroContainer) financeiroContainer.style.display = "none";
+    if (calendarioContainer) calendarioContainer.style.display = "none";
+    if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
+    if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
+    if (btnAbrirModalCriarEl) btnAbrirModalCriarEl.style.display = "none";
+    if (btnLimparTodasEl) btnLimparTodasEl.style.display = "none";
+    if (inputPesquisaEl) inputPesquisaEl.style.display = "none";
+    if (btnLimparTransacoes) btnLimparTransacoes.style.display = "none";
+    if (habitosContainer) habitosContainer.style.display = "";
+    if (tituloPaginaAtiva) tituloPaginaAtiva.textContent = "📊 Hábitos";
+    carregarHabitos();
+}
+
+function carregarHabitos() {
+    fetch(API_HABITOS_URL)
+        .then(res => res.json())
+        .then(dados => {
+            habitos = dados;
+            renderizarHabitos();
+        })
+        .catch(err => console.error(err));
+}
+
+function renderizarHabitos() {
+    if (!habitosGrid) return;
+    habitosGrid.innerHTML = "";
+    if (habitos.length === 0) {
+        habitosGrid.innerHTML = '<div class="text-center text-muted py-5 w-100"><p>Nenhum hábito criado.</p><button class="btn btn-success btn-sm" id="btnCriarPrimeiroHabito">+ Criar Primeiro Hábito</button></div>';
+        const btn = document.getElementById("btnCriarPrimeiroHabito");
+        if (btn) btn.addEventListener("click", () => abrirModalCriarHabito());
+        atualizarStatsHabitos();
+        return;
+    }
+    const hoje = new Date().toISOString().split("T")[0];
+
+    habitos.sort((a, b) => {
+        const aFeito = a.registros?.some(r => r.data === hoje && r.concluido) ? 1 : 0;
+        const bFeito = b.registros?.some(r => r.data === hoje && r.concluido) ? 1 : 0;
+        return aFeito - bFeito;
+    });
+    habitos.forEach(hab => {
+        const feitoHoje = hab.registros?.some(r => r.data === hoje && r.concluido) || false;
+        const cor = hab.cor || "#22c55e";
+        const card = document.createElement("div");
+        card.className = "habito-card";
+        card.innerHTML = `
+            <div class="habito-card-header">
+                <div class="habito-nome" style="color:${cor}">
+                    <span class="habito-indicator" style="background:${cor}"></span> ${hab.nome}
+                </div>
+                <div class="habito-actions">
+                    <button class="btn btn-sm p-0 border-0 bg-transparent habito-editar" data-id="${hab.id}" title="Editar">✏️</button>
+                    <button class="btn btn-sm p-0 border-0 bg-transparent text-danger habito-excluir" data-id="${hab.id}" title="Excluir">&times;</button>
+                </div>
+            </div>
+            <div class="habito-card-body">
+                <button class="btn ${feitoHoje ? 'btn-success' : 'btn-outline-success'} btn-sm w-100 habito-toggle" data-id="${hab.id}">
+                    ${feitoHoje ? '✅ Concluído Hoje' : '☐ Marcar Hoje'}
+                </button>
+            </div>`;
+        habitosGrid.appendChild(card);
+    });
+    habitosGrid.querySelectorAll(".habito-toggle").forEach(b => b.addEventListener("click", () => toggleHabito(Number(b.dataset.id))));
+    habitosGrid.querySelectorAll(".habito-editar").forEach(b => b.addEventListener("click", () => abrirModalCriarHabito(Number(b.dataset.id))));
+    habitosGrid.querySelectorAll(".habito-excluir").forEach(b => b.addEventListener("click", () => excluirHabito(Number(b.dataset.id))));
+    atualizarStatsHabitos();
+}
+
+function atualizarStatsHabitos() {
+    const hoje = new Date().toISOString().split("T")[0];
+    if (habTotal) habTotal.textContent = habitos.length;
+    if (habHoje) habHoje.textContent = habitos.filter(h => h.registros?.some(r => r.data === hoje && r.concluido)).length;
+    let streak = 0;
+    const d = new Date();
+    while (true) {
+        const chave = d.toISOString().split("T")[0];
+        const count = habitos.filter(h => h.registros?.some(r => r.data === chave && r.concluido)).length;
+        if (count > 0) { streak++; d.setDate(d.getDate() - 1); }
+        else break;
+    }
+    if (habSequencia) habSequencia.textContent = `${streak} dias`;
+}
+
+function toggleHabito(id) {
+    const hab = habitos.find(h => h.id === id);
+    if (!hab) return;
+    const hoje = new Date().toISOString().split("T")[0];
+    const existente = hab.registros?.find(r => r.data === hoje);
+    const concluido = existente ? !existente.concluido : true;
+    fetch(API_REGISTROS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ habitoId: id, data: hoje, concluido })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return carregarHabitos();
+    })
+    .catch(err => {
+        console.error("toggleHabito error:", err);
+        Swal.fire("Erro", "Não foi possível atualizar o hábito.", "error");
+    });
+}
+
+function abrirModalCriarHabito(editarId) {
+    const editar = editarId ? habitos.find(h => h.id === editarId) : null;
+    Swal.fire({
+        title: editar ? 'Editar Hábito' : 'Novo Hábito',
+        html: `<input id="swal-nome" class="swal2-input" placeholder="Nome do hábito" value="${editar ? editar.nome : ''}">
+               <div class="d-flex align-items-center gap-2 justify-content-center mt-2">
+                   <label class="small text-muted">Cor:</label>
+                   <input id="swal-cor" type="color" value="${editar ? editar.cor : '#22c55e'}" style="width:40px;height:40px;border:none;cursor:pointer;">
+               </div>`,
+        showCancelButton: true,
+        confirmButtonText: editar ? 'Salvar' : 'Criar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            const nome = document.getElementById('swal-nome').value.trim();
+            if (!nome) { Swal.showValidationMessage('O nome é obrigatório'); return; }
+            return { nome, cor: document.getElementById('swal-cor').value };
+        }
+    }).then(r => {
+        if (r.isConfirmed) {
+            const req = editar
+                ? fetch(`${API_HABITOS_URL}/${editar.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r.value) })
+                : fetch(API_HABITOS_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r.value) });
+            req.then(() => carregarHabitos()).catch(err => console.error(err));
+        }
+    });
+}
+
+function excluirHabito(id) {
+    const hab = habitos.find(h => h.id === id);
+    if (!hab) return;
+    Swal.fire({
+        title: 'Excluir?',
+        text: `Apagar "${hab.nome}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sim',
+        cancelButtonText: 'Não'
+    }).then(r => {
+        if (r.isConfirmed) fetch(`${API_HABITOS_URL}/${id}`, { method: "DELETE" }).then(() => carregarHabitos());
+    });
+}
+
+function abrirGraficoHabito(habitoId, nome) {
+    fetch(`${API_REGISTROS_URL}/${habitoId}`)
+        .then(res => res.json())
+        .then(registros => renderizarMapaContribuicao(registros, nome))
+        .catch(err => console.error(err));
+}
+
+if (btnMapaGeralHabitosPage) {
+    btnMapaGeralHabitosPage.addEventListener('click', () => {
+        fetch(API_HABITOS_URL)
+            .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+            .then(todos => {
+                const mapa = new Map();
+                const hoje = new Date();
+                for (let i = 365; i >= 0; i--) {
+                    const d = new Date(hoje);
+                    d.setDate(d.getDate() - i);
+                    const chave = d.toISOString().split("T")[0];
+                    let count = 0;
+                    todos.forEach(h => { if (h.registros?.some(r => r.data === chave && r.concluido)) count++; });
+                    mapa.set(chave, count);
+                }
+                renderizarMapaContribuicao(mapa, "📊 Mapa Geral de Hábitos");
+            })
+            .catch(err => {
+                console.error("MapaGeral error:", err);
+                Swal.fire("Erro", "Não foi possível carregar o mapa geral.", "error");
+            });
+    });
+}
+
+function renderizarMapaContribuicao(dados, titulo) {
+    const modal = new bootstrap.Modal(document.getElementById("modalHabitoGrafico"));
+    if (!contribuicaoGraf) return;
+    contribuicaoGraf.innerHTML = "";
+    const hoje = new Date();
+    let mapa = new Map();
+    if (Array.isArray(dados)) {
+        dados.forEach(r => { if (r.concluido) mapa.set(r.data, (mapa.get(r.data) || 0) + 1); });
+    } else if (dados instanceof Map) {
+        mapa = dados;
+    }
+    let streak = 0;
+    const dStreak = new Date(hoje);
+    while (true) {
+        const chave = dStreak.toISOString().split("T")[0];
+        if ((mapa.get(chave) || 0) > 0) { streak++; dStreak.setDate(dStreak.getDate() - 1); }
+        else break;
+    }
+    let maxCount = 0;
+    mapa.forEach(v => { if (v > maxCount) maxCount = v; });
+    const startDate = new Date(hoje);
+    startDate.setDate(startDate.getDate() - 363);
+    const colWidth = 14;
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "overflow-x:auto;padding:8px 0;";
+    const inner = document.createElement("div");
+    inner.style.cssText = `display:grid;grid-template-columns:30px repeat(52,${colWidth}px);gap:2px;font-size:9px;color:#888;`;
+    inner.innerHTML = '<div></div>';
+    for (let w = 0; w < 52; w++) {
+        const lbl = document.createElement("div");
+        lbl.style.textAlign = "center";
+        const dt = new Date(startDate);
+        dt.setDate(dt.getDate() + w * 7);
+        const mes = dt.toLocaleDateString("pt-BR", { month: "short" }).charAt(0).toUpperCase() + dt.toLocaleDateString("pt-BR", { month: "short" }).slice(1, 3);
+        lbl.textContent = (w === 0 || dt.getDate() <= 7) ? mes : '';
+        inner.appendChild(lbl);
+    }
+    const diasLabels = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+    for (let row = 0; row < 7; row++) {
+        const lbl = document.createElement("div");
+        lbl.textContent = row % 2 === 0 ? diasLabels[row] : '';
+        lbl.style.cssText = "display:flex;align-items:center;height:12px;";
+        inner.appendChild(lbl);
+        for (let col = 0; col < 52; col++) {
+            const dayIndex = col * 7 + row;
+            const dt = new Date(startDate);
+            dt.setDate(dt.getDate() + dayIndex);
+            if (dt > hoje) { const e = document.createElement("div"); inner.appendChild(e); continue; }
+            const chave = dt.toISOString().split("T")[0];
+            const count = mapa.get(chave) || 0;
+            const intensity = maxCount > 0 ? count / maxCount : 0;
+            const sq = document.createElement("div");
+            sq.style.cssText = `width:12px;height:12px;border-radius:2px;background:${count > 0 ? `rgba(34,197,94,${0.2 + intensity * 0.8})` : '#ebedf0'};cursor:pointer;`;
+            sq.title = `${chave}: ${count} hábito${count !== 1 ? 's' : ''}`;
+            inner.appendChild(sq);
+        }
+    }
+    wrapper.appendChild(inner);
+    contribuicaoGraf.appendChild(wrapper);
+    if (contadorSequencia) contadorSequencia.textContent = `🔥 Sequência: ${streak} dias`;
+    modal.show();
+}
+
+// Add "Novo Hábito" button into the habits header
+const habitosHeader = document.querySelector(".habitos-header");
+if (habitosHeader) {
+    const btnNovoHabito = document.createElement("button");
+    btnNovoHabito.className = "btn btn-sm btn-success fw-bold";
+    btnNovoHabito.textContent = "+ Novo Hábito";
+    btnNovoHabito.addEventListener("click", () => abrirModalCriarHabito());
+    habitosHeader.appendChild(btnNovoHabito);
 }
 
 inicializarSistema();

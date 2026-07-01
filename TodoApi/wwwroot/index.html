@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css" rel="stylesheet">
     <link href="content/CSS/style.css" rel="stylesheet">
 </head>
 
@@ -159,6 +161,30 @@
                     <div id="calendarioView" class="h-100"></div>
                 </div>
             </div>
+
+            <div id="habitosContainer" class="habitos-container" style="display: none;">
+                <div class="habitos-header px-3 pt-3 d-flex flex-wrap gap-3 align-items-center justify-content-between">
+                    <h5 class="fw-bold m-0">📊 Hábitos</h5>
+                    <button class="btn btn-sm btn-outline-info fw-bold" id="btnMapaGeralHabitosPage">📊 Mapa Geral</button>
+                </div>
+                <div class="habitos-summary d-flex flex-wrap gap-3 px-3 pt-3">
+                    <div class="habito-stat-card">
+                        <div class="habito-stat-label">Total</div>
+                        <div class="habito-stat-valor" id="habTotal">0</div>
+                    </div>
+                    <div class="habito-stat-card">
+                        <div class="habito-stat-label">Concluídos Hoje</div>
+                        <div class="habito-stat-valor text-success" id="habHoje">0</div>
+                    </div>
+                    <div class="habito-stat-card">
+                        <div class="habito-stat-label">🔥 Sequência</div>
+                        <div class="habito-stat-valor text-warning" id="habSequencia">0 dias</div>
+                    </div>
+                </div>
+                <div class="px-3 pt-3">
+                    <div class="habitos-grid" id="habitosGrid"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -186,7 +212,7 @@
                     </div>
                     <div>
                         <label class="form-label fw-semibold">Descrição (Opcional)</label>
-                        <textarea id="inputDescricaoModal" class="form-control" rows="3" placeholder="Detalhes da tarefa..."></textarea>
+                        <div id="quillEditorDescricao" style="min-height: 120px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff;"></div>
                     </div>
                     <div>
                         <label class="form-label fw-semibold">Grau de Urgência</label>
@@ -234,22 +260,25 @@
                     </div>
                     <div>
                         <label class="form-label fw-semibold">Alterar Descrição:</label>
-                        <textarea id="inputEditarDescricao" class="form-control" rows="3"></textarea>
+                        <div id="quillEditorEditarDescricao" style="min-height: 120px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff;"></div>
                     </div>
                     <div>
                         <label class="form-label fw-semibold">Alterar Grau de Urgência</label>
                         <select id="selectEditarUrgencia" class="form-select"></select>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                <div class="modal-footer d-flex flex-column gap-2">
+                    <button type="button" class="btn btn-outline-info btn-sm fw-bold w-100" id="btnDividirTarefaIAEditar">🤖 Dividir Tarefa com IA</button>
+                    <div class="d-flex gap-2 w-100">
+                        <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary flex-fill">Salvar Alterações</button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="modal fade" id="modalVerTarefa" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalVerTarefa" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -291,7 +320,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <button class="btn btn-dark mb-3 w-100" data-bs-toggle="modal" data-bs-target="#modalCanvas" id="btnNovaNota">+ Criar Nova Nota Escrita</button>
+                    <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-dark flex-fill" data-bs-toggle="modal" data-bs-target="#modalCanvas" id="btnNovaNota">✏️ Nota Escrita</button>
+                        <button class="btn btn-primary flex-fill" data-bs-toggle="modal" data-bs-target="#modalQuillEditor" id="btnNovaNotaTexto">📝 Nota de Texto</button>
+                    </div>
                     <div id="listaNotas" class="d-flex flex-wrap gap-2 justify-content-center"></div>
                 </div>
             </div>
@@ -301,11 +333,11 @@
     <div class="modal fade" id="modalCanvas" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-fullscreen-lg-down modal-xl">
             <div class="modal-content bg-light">
-                <div class="modal-header flex-wrap gap-2 justify-content-between align-items-center">
-                    <input type="text" id="inputTituloNota" class="form-control fw-bold border-0 bg-transparent fs-5" placeholder="Título da Anotação..." style="max-width: 200px;">
+                <div class="modal-header flex-wrap gap-2 justify-content-between align-items-center py-2">
+                    <input type="text" id="inputTituloNota" class="form-control fw-bold border-0 bg-transparent fs-6" placeholder="Título da Anotação..." style="max-width: 200px;">
                     <div class="d-flex gap-2 align-items-center">
                         <select id="selectTipoFolha" class="form-select form-select-sm" style="width: auto;">
-                            <option value="paper-blank">Folha em Branco</option>
+                            <option value="paper-blank">Branca</option>
                             <option value="paper-ruled">Pautada</option>
                             <option value="paper-grid">Quadriculada</option>
                             <option value="paper-dotted">Pontilhada</option>
@@ -314,78 +346,81 @@
                     </div>
                 </div>
                 <div class="modal-body p-2 d-flex flex-column align-items-center">
-                    <div class="canvas-toolbar d-flex gap-2 mb-2 p-2 rounded w-100 justify-content-center flex-wrap align-items-center" style="position: relative;">
-                        <div class="d-flex align-items-center gap-1">
-                            <label class="small fw-bold mb-0">Cor:</label>
-                            <input type="color" id="corCaneta" class="form-control form-control-color p-0 border-0" value="#000000" style="width:30px; height:30px;">
-                        </div>
-                        <div class="d-flex align-items-center gap-1">
-                            <label class="small fw-bold mb-0">Fonte:</label>
-                            <select id="selectTextoFonte" class="form-select form-select-sm" style="width: 100px;">
-                                <option value="Inter">Inter</option>
-                                <option value="Arial">Arial</option>
-                                <option value="Courier Prime">Courier</option>
-                                <option value="Georgia">Georgia</option>
-                            </select>
-                        </div>
-                        <div class="d-flex align-items-center gap-1">
-                            <label class="small fw-bold mb-0">Tam:</label>
-                            <select id="selectTextoTamanho" class="form-select form-select-sm" style="width: 70px;">
-                                <option value="14">14px</option>
-                                <option value="18" selected>18px</option>
-                                <option value="24">24px</option>
-                                <option value="32">32px</option>
-                                <option value="48">48px</option>
-                            </select>
-                        </div>
-                        <div class="d-flex align-items-center gap-1">
-                            <label class="small fw-bold mb-0">Traço:</label>
-                            <input type="range" id="espessuraCaneta" class="form-range" min="1" max="20" value="3" style="width: 60px;">
-                        </div>
-                        
-                        <button class="btn btn-sm btn-dark py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnCaneta">
-                            <img width="16" height="16" src="https://img.icons8.com/forma-thin-sharp/24/pen.png" alt="pen"/>
-                            <span class="btn-lbl-text">Caneta</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnMarcaTexto">
-                            <img width="16" height="16" src="https://img.icons8.com/external-sbts2018-outline-sbts2018/58/external-highlighter-stationery-items-sbts2018-outline-sbts2018.png" alt="highlighter"/>
-                            <span class="btn-lbl-text">Marca-Texto</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnTexto">
-                            <img width="16" height="16" src="https://img.icons8.com/material-outlined/24/text.png" alt="text"/>
-                            <span class="btn-lbl-text">Texto</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnBorracha">
-                            <img width="16" height="16" src="https://img.icons8.com/material-rounded/24/erase.png" alt="erase"/>
-                            <span class="btn-lbl-text">Borracha</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnUndo">
-                            <img width="16" height="16" src="https://img.icons8.com/fluency-systems-regular/48/undo--v1.png" alt="undo"/>
-                            <span class="btn-lbl-text">Desfazer</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary py-1 d-inline-flex align-items-center justify-content-center btn-tool" id="btnRedo">
-                            <img width="16" height="16" src="https://img.icons8.com/fluency-systems-regular/48/redo.png" alt="redo"/>
-                            <span class="btn-lbl-text">Refazer</span>
-                        </button>
-                        
-                        <button class="btn btn-sm btn-outline-danger py-1" id="btnLimparCanvas">Limpar</button>
-                        <button class="btn btn-sm btn-primary py-1" id="btnExportarNota">Baixar Nota</button>
+                    <!-- Row 1: Tools -->
+                    <div class="canvas-toolbar d-flex gap-1 mb-1 p-1 rounded w-100 justify-content-center flex-wrap align-items-center">
+                        <button class="btn btn-sm btn-dark px-2 canvas-tool" id="btnCaneta" title="Caneta">✏️</button>
+                        <button class="btn btn-sm btn-outline-secondary px-2 canvas-tool" id="btnMarcaTexto" title="Marca-Texto">🖍️</button>
+                        <button class="btn btn-sm btn-outline-secondary px-2 canvas-tool" id="btnTexto" title="Texto">🔤</button>
+                        <button class="btn btn-sm btn-outline-secondary px-2 canvas-tool" id="btnBorracha" title="Borracha">🧹</button>
+                        <button class="btn btn-sm btn-outline-secondary px-2 canvas-tool" id="btnLasso" title="Selecionar">✧</button>
+                        <span class="border-start mx-1" style="height:20px;"></span>
+                        <button class="btn btn-sm btn-outline-secondary px-2 canvas-tool" id="btnUndo" title="Desfazer">↩</button>
+                        <button class="btn btn-sm btn-outline-secondary px-2 canvas-tool" id="btnRedo" title="Refazer">↪</button>
+                        <span class="border-start mx-1" style="height:20px;"></span>
+                        <button class="btn btn-sm btn-outline-danger px-2" id="btnLimparCanvas" title="Limpar Tudo">🗑️</button>
+                        <button class="btn btn-sm btn-outline-primary px-2" id="btnExportarNota" title="Baixar PNG">⬇️</button>
                     </div>
-
-                    <div class="canvas-toolbar-pagination d-flex gap-2 mb-2 w-100 justify-content-center align-items-center flex-wrap">
-                        <button class="btn btn-sm btn-dark fw-bold px-2" id="btnPaginaAnterior">&lt; Ant</button>
+                    <!-- Row 2: Color palette + size -->
+                    <div class="d-flex gap-2 mb-1 w-100 justify-content-center align-items-center flex-wrap">
+                        <div class="d-flex gap-0_5 align-items-center" id="paletaCores">
+                            <span class="small fw-bold me-1 text-muted">Cor:</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="small fw-bold text-muted">Tam:</span>
+                            <input type="range" id="espessuraCaneta" class="form-range" min="1" max="12" value="3" style="width: 60px;">
+                        </div>
+                        <input type="color" id="corCaneta" class="form-control form-control-color p-0 border-0" value="#000000" style="width:24px;height:24px;cursor:pointer;">
+                    </div>
+                    <!-- Row 3: Text options (hidden unless text tool) -->
+                    <div class="d-flex gap-2 mb-1 w-100 justify-content-center align-items-center flex-wrap" id="textOptions" style="display:none !important;">
+                        <select id="selectTextoFonte" class="form-select form-select-sm" style="width: 100px;">
+                            <option value="Inter">Inter</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Courier Prime">Courier</option>
+                            <option value="Georgia">Georgia</option>
+                        </select>
+                        <select id="selectTextoTamanho" class="form-select form-select-sm" style="width: 70px;">
+                            <option value="14">14px</option>
+                            <option value="18" selected>18px</option>
+                            <option value="24">24px</option>
+                            <option value="32">32px</option>
+                            <option value="48">48px</option>
+                        </select>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="d-flex gap-2 mb-1 w-100 justify-content-center align-items-center flex-wrap">
+                        <button class="btn btn-sm btn-outline-dark px-2" id="btnPaginaAnterior">◀ Ant</button>
                         <span class="badge bg-secondary" id="lblPaginaAtual">Página 1 de 1</span>
-                        <button class="btn btn-sm btn-dark fw-bold px-2" id="btnProximaPagina">Prox &gt;</button>
-                        <button class="btn btn-sm btn-success fw-bold px-2" id="btnNovaPaginaNota">+ Pág</button>
+                        <button class="btn btn-sm btn-outline-dark px-2" id="btnProximaPagina">Prox ▶</button>
+                        <button class="btn btn-sm btn-outline-success px-2" id="btnNovaPaginaNota">+ Página</button>
                     </div>
-
+                    <!-- Canvas -->
                     <div class="canvas-wrapper" id="canvasWrapper">
                         <canvas id="drawCanvas" width="850" height="500" class="paper-blank"></canvas>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success btn-sm" id="btnSalvarNota">💾 Salvar Nota</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalQuillEditor" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-fullscreen-lg-down modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <input type="text" id="inputTituloQuill" class="form-control fw-bold border-0 bg-transparent fs-5" placeholder="Título da Nota..." style="max-width: 300px;">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" id="btnFecharQuill"></button>
+                </div>
+                <div class="modal-body p-2 d-flex flex-column" style="min-height: 400px;">
+                    <div id="quillEditor" style="flex: 1; min-height: 350px;"></div>
+                </div>
+                <div class="modal-footer d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary" id="btnResumirNotaIA">🤖 Resumir com IA</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-success" id="btnSalvarNota">💾 Salvar Nota</button>
+                    <button type="button" class="btn btn-success" id="btnSalvarNotaQuill">💾 Salvar Nota</button>
                 </div>
             </div>
         </div>
@@ -444,10 +479,39 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modalHabitoGrafico" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">📊 Mapa de Hábitos</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="contribuicaoGraf" class="d-flex flex-wrap gap-1 justify-content-center" style="max-height: 400px; overflow-y: auto;"></div>
+                    <hr>
+                    <div class="d-flex align-items-center justify-content-center gap-2">
+                        <span class="small text-muted">Menos</span>
+                        <div class="bg-gray" style="width: 12px; height: 12px; border-radius: 2px;"></div>
+                        <div class="bg-success" style="width: 12px; height: 12px; border-radius: 2px; opacity: 0.3;"></div>
+                        <div class="bg-success" style="width: 12px; height: 12px; border-radius: 2px; opacity: 0.5;"></div>
+                        <div class="bg-success" style="width: 12px; height: 12px; border-radius: 2px; opacity: 0.7;"></div>
+                        <div class="bg-success" style="width: 12px; height: 12px; border-radius: 2px; opacity: 1;"></div>
+                        <span class="small text-muted">Mais</span>
+                    </div>
+                    <div class="text-center mt-2">
+                        <span class="badge bg-warning text-dark" id="contadorSequencia">🔥 Sequência: 0 dias</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
     <script src="todo2.js"></script>
 </body>
 </html>

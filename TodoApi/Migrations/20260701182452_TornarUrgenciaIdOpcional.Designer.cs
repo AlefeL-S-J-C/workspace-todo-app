@@ -10,14 +10,97 @@ using TodoApi;
 namespace TodoApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260612202910_AdicionarStatusTarefa")]
-    partial class AdicionarStatusTarefa
+    [Migration("20260701182452_TornarUrgenciaIdOpcional")]
+    partial class TornarUrgenciaIdOpcional
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.8");
+
+            modelBuilder.Entity("TodoApi.Anotacao", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Conteudo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImagemBase64")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TipoFolha")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("Anotacoes");
+                });
+
+            modelBuilder.Entity("TodoApi.Habito", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Cor")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("TagId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("Habitos");
+                });
+
+            modelBuilder.Entity("TodoApi.RegistroHabito", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Concluido")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("HabitoId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HabitoId");
+
+                    b.ToTable("RegistroHabitos");
+                });
 
             modelBuilder.Entity("TodoApi.Subtarefa", b =>
                 {
@@ -56,6 +139,10 @@ namespace TodoApi.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.ToTable("Tags");
@@ -65,25 +152,43 @@ namespace TodoApi.Migrations
                         {
                             Id = 1,
                             Cor = "#6366f1",
-                            Nome = "Trabalho"
+                            Nome = "Trabalho",
+                            Tipo = "kanban"
                         },
                         new
                         {
                             Id = 2,
                             Cor = "#a855f7",
-                            Nome = "Estudos"
+                            Nome = "Estudos",
+                            Tipo = "kanban"
                         },
                         new
                         {
                             Id = 3,
-                            Cor = "#ec4899",
-                            Nome = "Pessoal"
+                            Cor = "#3b82f6",
+                            Nome = "Faculdade",
+                            Tipo = "kanban"
                         },
                         new
                         {
                             Id = 4,
+                            Cor = "#ec4899",
+                            Nome = "Pessoal",
+                            Tipo = "kanban"
+                        },
+                        new
+                        {
+                            Id = 5,
                             Cor = "#14b8a6",
-                            Nome = "Casa"
+                            Nome = "Casa",
+                            Tipo = "kanban"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Cor = "#22c55e",
+                            Nome = "Financeiro",
+                            Tipo = "financeiro"
                         });
                 });
 
@@ -105,6 +210,7 @@ namespace TodoApi.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Descricao")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
@@ -118,7 +224,7 @@ namespace TodoApi.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UrgenciaId")
+                    b.Property<int?>("UrgenciaId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -128,6 +234,41 @@ namespace TodoApi.Migrations
                     b.HasIndex("UrgenciaId");
 
                     b.ToTable("Tarefas");
+                });
+
+            modelBuilder.Entity("TodoApi.TransacaoFinanceira", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Valor")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("TransacoesFinanceiras");
                 });
 
             modelBuilder.Entity("TodoApi.Urgencia", b =>
@@ -199,6 +340,38 @@ namespace TodoApi.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TodoApi.Anotacao", b =>
+                {
+                    b.HasOne("TodoApi.Tag", "Tag")
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("TodoApi.Habito", b =>
+                {
+                    b.HasOne("TodoApi.Tag", "Tag")
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("TodoApi.RegistroHabito", b =>
+                {
+                    b.HasOne("TodoApi.Habito", "Habito")
+                        .WithMany("Registros")
+                        .HasForeignKey("HabitoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Habito");
+                });
+
             modelBuilder.Entity("TodoApi.Subtarefa", b =>
                 {
                     b.HasOne("TodoApi.Tarefa", "Tarefa")
@@ -223,6 +396,22 @@ namespace TodoApi.Migrations
                     b.Navigation("Tag");
 
                     b.Navigation("Urgencia");
+                });
+
+            modelBuilder.Entity("TodoApi.TransacaoFinanceira", b =>
+                {
+                    b.HasOne("TodoApi.Tag", "Tag")
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("TodoApi.Habito", b =>
+                {
+                    b.Navigation("Registros");
                 });
 
             modelBuilder.Entity("TodoApi.Tarefa", b =>

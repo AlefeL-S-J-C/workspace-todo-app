@@ -802,3 +802,150 @@ body.dark-mode .fc .fc-more-popover .fc-daygrid-more-popover {
     font-weight: 600;
     color: var(--text-muted, #6b7280);
 }
+
+/* ===== Habits ===== */
+.habitos-container {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.habitos-summary {
+    gap: 1rem;
+}
+
+.habito-stat-card {
+    flex: 1;
+    min-width: 120px;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid var(--border-color, #e3e5e8);
+    background-color: var(--bg-card, white);
+    text-align: center;
+}
+
+.habito-stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.habito-stat-valor {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main, #1e293b);
+}
+
+.habitos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.habito-card {
+    border: 1px solid var(--border-color, #e3e5e8);
+    border-radius: 12px;
+    padding: 1rem;
+    background-color: var(--bg-card, white);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.habito-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.habito-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.habito-nome {
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.habito-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.habito-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.habito-card-body {
+    margin-bottom: 0.5rem;
+}
+
+.habito-card-footer {
+    margin-top: auto;
+}
+
+body.dark-mode .habito-card {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .habito-stat-card {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .habito-stat-valor {
+    color: var(--text-main) !important;
+}
+
+/* ===== Quill Editor Styles ===== */
+.ql-editor {
+    min-height: 120px;
+    font-size: 0.95rem;
+}
+
+#quillEditor .ql-editor {
+    min-height: 350px;
+}
+
+body.dark-mode .ql-toolbar {
+    background-color: var(--bg-toolbar) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .ql-container {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .ql-editor {
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .ql-stroke {
+    stroke: var(--text-main) !important;
+}
+
+body.dark-mode .ql-fill {
+    fill: var(--text-main) !important;
+}
+
+body.dark-mode .ql-picker-options {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .ql-picker-label {
+    color: var(--text-main) !important;
+}

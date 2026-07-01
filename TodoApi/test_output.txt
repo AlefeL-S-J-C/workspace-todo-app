@@ -1,0 +1,18 @@
+= : O termo '=' não é reconhecido como nome de cmdlet, função, arquivo de script ou programa operável. Verifique a 
+grafia do nome ou, se um caminho tiver sido incluído, veja se o caminho está correto e tente novamente.
+No linha:5 caractere:2
++  = Start-Process dotnet -Argument 'run' -NoNewWindow -PassThru
++  ~
+    + CategoryInfo          : ObjectNotFound: (=:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+? Endpoint not working
+Error: .Exception.Message
+Stop-Process : Não é possível associar o parâmetro 'Id'. Não é possível converter o valor ".Id" para o tipo 
+"System.Int32". Erro: "A cadeia de caracteres de entrada não estava em um formato correto."
+No linha:15 caractere:18
++ Stop-Process -Id .Id -Force
++                  ~~~
+    + CategoryInfo          : InvalidArgument: (:) [Stop-Process], ParameterBindingException
+    + FullyQualifiedErrorId : CannotConvertArgumentNoMessage,Microsoft.PowerShell.Commands.StopProcessCommand
+ 
