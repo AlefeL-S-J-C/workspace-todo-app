@@ -845,17 +845,6 @@ body.dark-mode .mindmap-svg {
     background-color: var(--bg-card, #2d2d2d);
 }
 
-body.dark-mode .mindmap-node.selected rect {
-    stroke: #60a5fa !important;
-}
-
-.mindmap-node.connect-origin rect {
-    stroke: #f59e0b !important;
-    stroke-width: 3;
-    stroke-dasharray: 6,3;
-    animation: mindmap-pulse 1s infinite;
-}
-
 @keyframes mindmap-pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }

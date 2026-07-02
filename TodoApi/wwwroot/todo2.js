@@ -47,7 +47,6 @@ const formModalTarefa = document.getElementById("formModalTarefa");
 const inputTituloModal = document.getElementById("inputTituloModal");
 const inputDataInicioModal = document.getElementById("inputDataInicioModal");
 const inputDataFimModal = document.getElementById("inputDataFimModal");
-const inputDescricaoModal = document.getElementById("inputDescricaoModal");
 const btnLimparTodas = document.getElementById("btnLimparTodas");
 const contadorTarefas = document.getElementById("contadorTarefas");
 const btnFecharModal = document.getElementById("btnFecharModal");
@@ -57,7 +56,6 @@ const inputEditarTitulo = document.getElementById("inputEditarTitulo");
 const selectEditarStatus = document.getElementById("selectEditarStatus");
 const inputEditarDataInicio = document.getElementById("inputEditarDataInicio");
 const inputEditarDataFim = document.getElementById("inputEditarDataFim");
-const inputEditarDescricao = document.getElementById("inputEditarDescricao");
 const btnFecharModalEditar = document.getElementById("btnFecharModalEditar");
 const verTarefaTitulo = document.getElementById("verTarefaTitulo");
 const verTarefaDataInicio = document.getElementById("verTarefaDataInicio");
@@ -540,7 +538,7 @@ function renderizarTarefas() {
             if (selectEditarStatus) selectEditarStatus.value = tarefa.status || "A Fazer";
             if (inputEditarDataInicio) inputEditarDataInicio.value = tarefa.dataInicio;
             if (inputEditarDataFim) inputEditarDataFim.value = tarefa.dataFim;
-            if (inputEditarDescricao) inputEditarDescricao.value = tarefa.descricao || "";
+            if (quillEditar) quillEditar.root.innerHTML = tarefa.descricao || "";
             if (selectEditarUrgencia) {
                 selectEditarUrgencia.value = tarefa.urgenciaId;
                 atualizarCorSelect(selectEditarUrgencia);
@@ -695,7 +693,7 @@ if (formModalTarefa) {
         const texto = inputTituloModal.value.trim();
         const dataInicio = inputDataInicioModal.value;
         const dataFim = inputDataFimModal.value;
-        const genericDescricao = inputDescricaoModal.value.trim();
+        const genericDescricao = quillCriar ? quillCriar.root.innerHTML : '';
         const urgenciaId = Number(selectUrgenciaModal.value);
         const tagId = paginaAtivaId;
 
@@ -734,7 +732,7 @@ if (formModalEditarTarefa) {
         const statusAtualizado = selectEditarStatus.value;
         const dataInicioAtualizada = inputEditarDataInicio.value;
         const dataFimAtualizada = inputEditarDataFim.value;
-        const descricaoAtualizada = inputEditarDescricao.value.trim();
+        const descricaoAtualizada = quillEditar ? quillEditar.root.innerHTML : '';
         const urgenciaAtualizada = Number(selectEditarUrgencia.value);
         const tagAtualizada = paginaAtivaId;
 
@@ -2778,6 +2776,14 @@ function renderizarMindMapSvg() {
         line.dataset.from = conn.from;
         line.dataset.to = conn.to;
         line.style.cursor = "pointer";
+        line.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (btnMindMapDelete && btnMindMapDelete.classList.contains("btn-dark")) {
+                mindMapConnections = mindMapConnections.filter(c => !(c.from === conn.from && c.to === conn.to));
+                if (mindMapStatus) mindMapStatus.textContent = "Conexão removida.";
+                renderizarMindMapSvg();
+            }
+        });
         svg.appendChild(line);
     });
 }
@@ -2802,6 +2808,7 @@ function renderizarMindMapDivs() {
         div.style.top = node.y + "px";
 
         div.addEventListener("click", (e) => {
+            if (dragMoved) { dragMoved = false; return; }
             e.stopPropagation();
             if (mindMapConnectMode) {
                 if (mindMapConnectFrom === null) {
@@ -2903,11 +2910,6 @@ function renderizarMindMapDivs() {
             document.addEventListener("mouseup", onUp);
         });
 
-        // Click after drag guard
-        div.addEventListener("click", (e) => {
-            if (dragMoved) { e.stopPropagation(); dragMoved = false; }
-        }, true);
-
         wrapper.appendChild(div);
     });
 }
@@ -2953,20 +2955,6 @@ function mmCriarNo(x, y) {
     });
 }
 
-// Click on empty wrapper area to create node
-if (mindMapCanvasWrapper) {
-    mindMapCanvasWrapper.addEventListener("click", (e) => {
-        if (e.target !== mindMapCanvasWrapper && !e.target.classList.contains("mindmap-svg")) return;
-        if (mindMapConnectMode || (btnMindMapDelete && btnMindMapDelete.classList.contains("btn-dark"))) return;
-        const wrapper = mindMapCanvasWrapper;
-        const rect = wrapper.getBoundingClientRect();
-        const x = e.clientX - rect.left + wrapper.scrollLeft;
-        const y = e.clientY - rect.top + wrapper.scrollTop;
-        mmCriarNo(x, y);
-    });
-}
-
-// Also create node on double-click wrapper background (to be safe)
 if (mindMapCanvasWrapper) {
     mindMapCanvasWrapper.addEventListener("dblclick", (e) => {
         if (e.target !== mindMapCanvasWrapper && !e.target.classList.contains("mindmap-svg")) return;
@@ -3073,12 +3061,74 @@ if (btnMindMapExport) {
 }
 
 function exportMindMap() {
-    if (!mindMapSvg) return;
-    const svgData = new XMLSerializer().serializeToString(mindMapSvg);
+    const wrapper = document.getElementById("mindMapCanvasWrapper");
+    if (!wrapper) return;
+    const w = wrapper.scrollWidth || 1000;
+    const h = wrapper.scrollHeight || 600;
+    const ns = "http://www.w3.org/2000/svg";
+    const exportSvg = document.createElementNS(ns, "svg");
+    exportSvg.setAttribute("width", w);
+    exportSvg.setAttribute("height", h);
+    exportSvg.setAttribute("xmlns", ns);
+    const defs = document.createElementNS(ns, "defs");
+    const marker = document.createElementNS(ns, "marker");
+    marker.setAttribute("id", "exportArrow");
+    marker.setAttribute("markerWidth", "10");
+    marker.setAttribute("markerHeight", "7");
+    marker.setAttribute("refX", "10");
+    marker.setAttribute("refY", "3.5");
+    marker.setAttribute("orient", "auto");
+    const poly = document.createElementNS(ns, "polygon");
+    poly.setAttribute("points", "0 0, 10 3.5, 0 7");
+    poly.setAttribute("fill", "#64748b");
+    marker.appendChild(poly);
+    defs.appendChild(marker);
+    exportSvg.appendChild(defs);
+    mindMapConnections.forEach(conn => {
+        const fromNode = mindMapNodes.find(n => n.id === conn.from);
+        const toNode = mindMapNodes.find(n => n.id === conn.to);
+        if (!fromNode || !toNode) return;
+        const fromW = Math.max(80, (fromNode.texto?.length || 4) * 9 + 20);
+        const toW = Math.max(80, (toNode.texto?.length || 4) * 9 + 20);
+        const line = document.createElementNS(ns, "line");
+        line.setAttribute("x1", fromNode.x + fromW / 2);
+        line.setAttribute("y1", fromNode.y + 25);
+        line.setAttribute("x2", toNode.x + toW / 2);
+        line.setAttribute("y2", toNode.y + 25);
+        line.setAttribute("stroke", "#64748b");
+        line.setAttribute("stroke-width", "2");
+        line.setAttribute("marker-end", "url(#exportArrow)");
+        exportSvg.appendChild(line);
+    });
+    mindMapNodes.forEach(node => {
+        const nodeW = Math.max(80, (node.texto?.length || 4) * 9 + 20);
+        const g = document.createElementNS(ns, "g");
+        const rect = document.createElementNS(ns, "rect");
+        rect.setAttribute("x", node.x);
+        rect.setAttribute("y", node.y);
+        rect.setAttribute("width", nodeW);
+        rect.setAttribute("height", "36");
+        rect.setAttribute("rx", "10");
+        rect.setAttribute("fill", "#e2e8f0");
+        rect.setAttribute("stroke", "#cbd5e1");
+        rect.setAttribute("stroke-width", "2");
+        g.appendChild(rect);
+        const text = document.createElementNS(ns, "text");
+        text.setAttribute("x", node.x + nodeW / 2);
+        text.setAttribute("y", node.y + 24);
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("font-size", "0.85rem");
+        text.setAttribute("font-weight", "600");
+        text.setAttribute("font-family", "Inter, sans-serif");
+        text.setAttribute("fill", "#1e293b");
+        text.textContent = node.texto || "Nó";
+        g.appendChild(text);
+        exportSvg.appendChild(g);
+    });
+    const svgData = new XMLSerializer().serializeToString(exportSvg);
     const canvas = document.createElement("canvas");
-    const svgSize = mindMapSvg.getBoundingClientRect();
-    canvas.width = svgSize.width || 1000;
-    canvas.height = svgSize.height || 600;
+    canvas.width = w;
+    canvas.height = h;
     const ctx = canvas.getContext("2d");
     const img = new Image();
     const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
