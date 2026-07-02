@@ -1,6 +1,6 @@
 # 🚀 Workspace To-Do, Notes, Habits & Finance
 
-Aplicação web completa para produtividade pessoal com **Quadro Kanban**, **Editor de Texto Rico (Quill.js)** para tarefas e notas, **Bloco de Notas Digital (Canvas)**, **Rastreador de Hábitos** com gráfico de contribuição estilo GitHub, **Assistente IA (Gemini)**, **Pomodoro Timer** e **Controle Financeiro**.
+Aplicação web completa para produtividade pessoal com **Quadro Kanban**, **Editor de Texto Rico (Quill.js)** para tarefas e notas, **Bloco de Notas Digital (Canvas)**, **Rastreador de Hábitos** com gráfico de contribuição estilo GitHub, **Assistente IA (Gemini)**, **Pomodoro Timer**, **Controle Financeiro**, **Agenda Diária (Time Blocking)** e **Mapas Mentais (Mind Maps)**.
 
 ---
 
@@ -59,6 +59,21 @@ Aplicação web completa para produtividade pessoal com **Quadro Kanban**, **Edi
 - **Tipos de Folha:** Em branco, pautada, quadriculada ou pontilhada.
 - **Exportação:** Baixe a nota como `.png`.
 
+### ⏳ Agenda Diária (Time Blocking)
+- **Timeline Visual:** Grade de horários das 08:00 às 22:00 com slots de 30 minutos.
+- **Adição Rápida:** Cada slot tem um campo de texto para criar uma nova tarefa diretamente naquele horário.
+- **Visualização Diária:** Selecione qualquer data para ver/editar a programação do dia.
+- **Remoção Rápida:** Clique no "×" para remover uma tarefa do bloco.
+- **Detalhes da Tarefa:** Clique em uma tarefa agendada para ver seus detalhes.
+
+### 🧠 Mapeamento Mental (Mind Maps)
+- **Nós Interativos:** Duplo-clique no canvas para criar bolhas de texto.
+- **Conexões Visuais:** Modo "Conectar" para ligar nós com setas direcionais.
+- **Arrastar e Editar:** Mova nós livremente; duplo-clique em um nó para editar o texto.
+- **Converter em Tarefa:** Selecione um nó e clique em "Criar Tarefa" para transformá-lo em uma tarefa real.
+- **Exportar como PNG:** Baixe o mapa mental como imagem.
+- **Ajuda Integrada:** Botão "❓" com tutorial rápido de uso.
+
 ### 📱 Interface e Experiência (UI/UX)
 - **Design Responsivo:** Adapta-se a telemóveis, tablets e computadores.
 - **Modo Escuro (Dark Mode):** Interface adaptada para ambientes de pouca luz.
@@ -79,6 +94,7 @@ Aplicação web completa para produtividade pessoal com **Quadro Kanban**, **Edi
 - [Highlight.js](https://highlightjs.org/) (Realce de Sintaxe)
 - [Canvas Confetti](https://github.com/catdad/canvas-confetti)
 - HTML `<canvas>` API (Contexto 2D)
+- SVG API (Mapas Mentais)
 - Notification API (Pomodoro)
 
 **Backend:**
@@ -148,6 +164,8 @@ workspace-todo-app/
 │   ├── TransacaoFinanceira.cs     # Financial transaction model
 │   ├── Habito.cs                  # Habit model
 │   ├── RegistroHabito.cs          # Daily habit records
+│   ├── TimeBlock.cs               # Time blocking model
+│   ├── MindMap.cs                 # Mind map model
 │   ├── GeminiModels.cs            # Gemini API response models
 │   ├── TodoApi.csproj
 │   ├── appsettings.json
@@ -203,6 +221,15 @@ workspace-todo-app/
 | GET | `/calendario` | Eventos unificados (tarefas + transações) |
 | POST | `/ia/dividir-tarefa` | IA divide tarefa em subtarefas |
 | POST | `/ia/resumir-nota` | IA resume conteúdo de nota |
+| GET | `/timeblocks/{data}/{tagId}` | Blocos de agenda por data e página |
+| POST | `/timeblocks` | Cria bloco de agenda |
+| PUT | `/timeblocks/{id}` | Atualiza bloco de agenda |
+| DELETE | `/timeblocks/{id}` | Remove bloco de agenda |
+| DELETE | `/timeblocks/limpar/{tagId}` | Remove todos os blocos da página |
+| GET | `/mindmaps/{tagId}` | Lista mapas mentais por página |
+| POST | `/mindmaps` | Cria novo mapa mental |
+| PUT | `/mindmaps/{id}` | Atualiza mapa mental |
+| DELETE | `/mindmaps/{id}` | Remove mapa mental |
 
 ### Fluxo de Dados
 
@@ -223,4 +250,6 @@ workspace-todo-app/
 - **Calendário** — Visão mensal com tarefas e transações
 - **Financeiro** — Controle de receitas/despesas com filtros
 - **IA Gemini** — Divisão de tarefas e resumo de notas
+- **Agenda Diária** — Time blocking com drag & drop do Kanban
+- **Mapas Mentais** — Nós, conexões e conversão em tarefas
 - **Dark Mode** — Alternância clara/escuro
