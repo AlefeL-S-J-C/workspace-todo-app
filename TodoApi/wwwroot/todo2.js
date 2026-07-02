@@ -16,6 +16,8 @@ const API_HABITOS_URL = "http://localhost:5152/habitos";
 const API_REGISTROS_URL = "http://localhost:5152/registros-habitos";
 const API_IA_DIVIDIR_URL = "http://localhost:5152/ia/dividir-tarefa";
 const API_IA_RESUMIR_URL = "http://localhost:5152/ia/resumir-nota";
+const API_TIMEBLOCKS_URL = "http://localhost:5152/timeblocks";
+const API_MINDMAPS_URL = "http://localhost:5152/mindmaps";
 
 let arrUrgencia = [];
 let arrTags = [];
@@ -29,6 +31,17 @@ let quillNota = null;
 let notaQuillEditandoId = null;
 let habitos = [];
 let modoHabitos = false;
+let modoAgenda = false;
+let modoMindMap = false;
+let timeBlocks = [];
+let mindMaps = [];
+let mindMapNodes = [];
+let mindMapConnections = [];
+let mindMapSelectedNodeId = null;
+let mindMapConnectMode = false;
+let mindMapConnectFrom = null;
+let mindMapEditandoId = null;
+let mindMapNextNodeId = 1;
 
 const formModalTarefa = document.getElementById("formModalTarefa");
 const inputTituloModal = document.getElementById("inputTituloModal");
@@ -278,18 +291,22 @@ function renderizarMenuLateral() {
     
     arrTags.forEach(tag => {
         const item = document.createElement("div");
-        item.className = `page-item ${tag.id === paginaAtivaId && !modoCalendario ? 'active' : ''}`;
+        const paginaAtiva = tag.id === paginaAtivaId && !modoCalendario && !modoAgenda && !modoHabitos && !modoMindMap;
+        item.className = `page-item ${paginaAtiva ? 'active' : ''}`;
         const spanNome = document.createElement("span");
         spanNome.textContent = `${tag.tipo === "financeiro" ? "💰" : "📄"} ${tag.nome}`;
         item.appendChild(spanNome);
         
-        if (tag.id === paginaAtivaId && tituloPaginaAtiva && !modoCalendario) {
+        if (tag.id === paginaAtivaId && tituloPaginaAtiva && !modoCalendario && !modoAgenda && !modoHabitos && !modoMindMap) {
             tituloPaginaAtiva.textContent = tag.nome;
         }
         
         item.addEventListener("click", () => {
             paginaAtivaId = tag.id;
+            modoAgenda = false;
             modoCalendario = false;
+            modoHabitos = false;
+            modoMindMap = false;
             if (sidebarMenu && sidebarMenu.classList.contains("show")) {
                 alternarMenuMovel();
             }
@@ -333,6 +350,8 @@ function renderizarMenuLateral() {
     divHabitos.addEventListener("click", () => {
         modoHabitos = true;
         modoCalendario = false;
+        modoAgenda = false;
+        modoMindMap = false;
         if (sidebarMenu && sidebarMenu.classList.contains("show")) {
             alternarMenuMovel();
         }
@@ -340,6 +359,48 @@ function renderizarMenuLateral() {
         mostrarHabitos();
     });
     listaPaginas.appendChild(divHabitos);
+
+    const divAgenda = document.createElement("div");
+    divAgenda.className = `page-item ${modoAgenda ? 'active' : ''}`;
+    divAgenda.style.marginTop = "4px";
+    divAgenda.style.borderTop = "1px solid var(--border-color, #e3e5e8)";
+    divAgenda.style.paddingTop = "8px";
+    const spanAgenda = document.createElement("span");
+    spanAgenda.textContent = "📅 Agenda";
+    divAgenda.appendChild(spanAgenda);
+    divAgenda.addEventListener("click", () => {
+        modoAgenda = true;
+        modoCalendario = false;
+        modoHabitos = false;
+        modoMindMap = false;
+        if (sidebarMenu && sidebarMenu.classList.contains("show")) {
+            alternarMenuMovel();
+        }
+        renderizarMenuLateral();
+        mostrarAgenda();
+    });
+    listaPaginas.appendChild(divAgenda);
+
+    const divMindMap = document.createElement("div");
+    divMindMap.className = `page-item ${modoMindMap ? 'active' : ''}`;
+    divMindMap.style.marginTop = "4px";
+    divMindMap.style.borderTop = "1px solid var(--border-color, #e3e5e8)";
+    divMindMap.style.paddingTop = "8px";
+    const spanMindMap = document.createElement("span");
+    spanMindMap.textContent = "🧠 Mapa Mental";
+    divMindMap.appendChild(spanMindMap);
+    divMindMap.addEventListener("click", () => {
+        modoMindMap = true;
+        modoAgenda = false;
+        modoCalendario = false;
+        modoHabitos = false;
+        if (sidebarMenu && sidebarMenu.classList.contains("show")) {
+            alternarMenuMovel();
+        }
+        renderizarMenuLateral();
+        mostrarMindMaps();
+    });
+    listaPaginas.appendChild(divMindMap);
 }
 
 if (btnCriarPagina) {
@@ -1376,9 +1437,13 @@ const btnLimparTransacoes = document.getElementById("btnLimparTransacoes");
 function mostrarKanban() {
     modoHabitos = false;
     modoCalendario = false;
+    modoAgenda = false;
+    modoMindMap = false;
     if (financeiroContainer) financeiroContainer.style.display = "none";
     if (calendarioContainer) calendarioContainer.style.display = "none";
     if (habitosContainer) habitosContainer.style.display = "none";
+    if (agendaContainer) agendaContainer.style.display = "none";
+    if (mindmapContainer) mindmapContainer.style.display = "none";
     if (kanbanContainer) kanbanContainer.style.display = "";
     if (contadorTarefasEl) contadorTarefasEl.style.display = "";
     if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "";
@@ -1395,9 +1460,13 @@ function mostrarKanban() {
 function mostrarFinanceiro() {
     modoHabitos = false;
     modoCalendario = false;
+    modoAgenda = false;
+    modoMindMap = false;
     if (kanbanContainer) kanbanContainer.style.display = "none";
     if (calendarioContainer) calendarioContainer.style.display = "none";
     if (habitosContainer) habitosContainer.style.display = "none";
+    if (agendaContainer) agendaContainer.style.display = "none";
+    if (mindmapContainer) mindmapContainer.style.display = "none";
     if (financeiroContainer) financeiroContainer.style.display = "";
     if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
     if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
@@ -1648,9 +1717,13 @@ if (formTransacao) {
 
 function mostrarCalendario() {
     modoHabitos = false;
+    modoAgenda = false;
+    modoMindMap = false;
     if (kanbanContainer) kanbanContainer.style.display = "none";
     if (financeiroContainer) financeiroContainer.style.display = "none";
     if (habitosContainer) habitosContainer.style.display = "none";
+    if (agendaContainer) agendaContainer.style.display = "none";
+    if (mindmapContainer) mindmapContainer.style.display = "none";
     if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
     if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
     if (btnAbrirModalCriarEl) btnAbrirModalCriarEl.style.display = "none";
@@ -2047,9 +2120,14 @@ if (btnResumirNotaIA) {
 // ===== Hábitos System =====
 function mostrarHabitos() {
     modoHabitos = true;
+    modoAgenda = false;
+    modoCalendario = false;
+    modoMindMap = false;
     if (kanbanContainer) kanbanContainer.style.display = "none";
     if (financeiroContainer) financeiroContainer.style.display = "none";
     if (calendarioContainer) calendarioContainer.style.display = "none";
+    if (agendaContainer) agendaContainer.style.display = "none";
+    if (mindmapContainer) mindmapContainer.style.display = "none";
     if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
     if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
     if (btnAbrirModalCriarEl) btnAbrirModalCriarEl.style.display = "none";
@@ -2288,14 +2366,827 @@ function renderizarMapaContribuicao(dados, titulo) {
     modal.show();
 }
 
-// Add "Novo Hábito" button into the habits header
-const habitosHeader = document.querySelector(".habitos-header");
-if (habitosHeader) {
-    const btnNovoHabito = document.createElement("button");
-    btnNovoHabito.className = "btn btn-sm btn-success fw-bold";
-    btnNovoHabito.textContent = "+ Novo Hábito";
-    btnNovoHabito.addEventListener("click", () => abrirModalCriarHabito());
-    habitosHeader.appendChild(btnNovoHabito);
+// ----------------------------------------------------------------------
+// TIME BLOCKING (AGENDA DIÁRIA)
+// ----------------------------------------------------------------------
+const agendaContainer = document.getElementById("agendaContainer");
+const agendaTimeline = document.getElementById("agendaTimeline");
+const inputAgendaData = document.getElementById("inputAgendaData");
+const btnAgendaHoje = document.getElementById("btnAgendaHoje");
+const agendaTarefasCount = document.getElementById("agendaTarefasCount");
+let agendaDataSelecionada = new Date().toISOString().split("T")[0];
+
+function mostrarAgenda() {
+    modoAgenda = true;
+    modoMindMap = false;
+    modoCalendario = false;
+    modoHabitos = false;
+    if (kanbanContainer) kanbanContainer.style.display = "none";
+    if (financeiroContainer) financeiroContainer.style.display = "none";
+    if (calendarioContainer) calendarioContainer.style.display = "none";
+    if (habitosContainer) habitosContainer.style.display = "none";
+    if (mindmapContainer) mindmapContainer.style.display = "none";
+    if (agendaContainer) agendaContainer.style.display = "";
+    if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
+    if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
+    if (btnAbrirModalCriarEl) btnAbrirModalCriarEl.style.display = "none";
+    if (btnLimparTodasEl) btnLimparTodasEl.style.display = "none";
+    if (inputPesquisaEl) inputPesquisaEl.style.display = "none";
+    if (btnLimparTransacoes) btnLimparTransacoes.style.display = "none";
+    if (tituloPaginaAtiva) tituloPaginaAtiva.textContent = "📅 Agenda Diária";
+    if (inputAgendaData) inputAgendaData.value = agendaDataSelecionada;
+    carregarTimeBlocks();
+}
+
+function carregarTimeBlocks() {
+    if (!paginaAtivaId) return;
+    fetch(`${API_TIMEBLOCKS_URL}/${agendaDataSelecionada}/${paginaAtivaId}`)
+        .then(res => res.json())
+        .then(dados => {
+            timeBlocks = dados;
+            renderizarAgenda();
+        })
+        .catch(err => console.error(err));
+}
+
+function renderizarAgenda() {
+    if (!agendaTimeline) return;
+    agendaTimeline.innerHTML = "";
+
+    let total = 0;
+    for (let h = 8; h < 22; h++) {
+        for (let m = 0; m < 60; m += 30) {
+            const horaStr = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+            const horaFim = m === 0
+                ? `${String(h).padStart(2, "0")}:30`
+                : `${String(h + 1).padStart(2, "0")}:00`;
+
+            const block = timeBlocks.find(b => b.horaInicio === horaStr);
+            const slot = document.createElement("div");
+            slot.className = `agenda-slot ${block ? "has-task" : ""}`;
+            slot.dataset.hora = horaStr;
+
+            const timeLabel = document.createElement("div");
+            timeLabel.className = "agenda-time";
+            timeLabel.textContent = m === 0 ? horaStr : "";
+
+            const content = document.createElement("div");
+            content.className = "agenda-slot-content";
+
+            if (block) {
+                total++;
+                const badge = document.createElement("div");
+                badge.className = "agenda-task-badge";
+                const cor = block.tarefa?.urgencia?.cor || "#6c757d";
+                badge.style.borderLeft = `4px solid ${cor}`;
+
+                const textSpan = document.createElement("span");
+                textSpan.className = "task-text";
+                textSpan.textContent = block.tarefa?.texto || "Tarefa";
+
+                const timeSpan = document.createElement("span");
+                timeSpan.className = "task-time";
+                timeSpan.textContent = `${horaStr} - ${horaFim}`;
+
+                const btnRemove = document.createElement("button");
+                btnRemove.className = "btn-remove-slot";
+                btnRemove.innerHTML = "&times;";
+                btnRemove.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    removerTimeBlock(block.id);
+                });
+
+                badge.addEventListener("click", (e) => {
+                    if (e.target === btnRemove) return;
+                    const tarefa = tarefas.find(t => t.id === block.tarefaId);
+                    if (tarefa) {
+                        tarefaSelecionadaId = tarefa.id;
+                        const u = arrUrgencia.find(u => u.id === tarefa.urgenciaId) || { cor: "#6c757d", descricao: "Padrão" };
+                        if (verTarefaTitulo) verTarefaTitulo.textContent = tarefa.texto;
+                        if (verTarefaDataInicio) verTarefaDataInicio.textContent = formatarDataBR(tarefa.dataInicio);
+                        if (verTarefaDataFim) verTarefaDataFim.textContent = formatarDataBR(tarefa.dataFim, true);
+                        if (verTarefaDescricao) verTarefaDescricao.textContent = tarefa.descricao || "Sem descrição.";
+                        if (verTarefaUrgenciaBadge) {
+                            verTarefaUrgenciaBadge.textContent = u.descricao;
+                            verTarefaUrgenciaBadge.style.backgroundColor = u.cor;
+                        }
+                        renderizarSubtarefas(tarefa.subtarefas);
+                        new bootstrap.Modal(document.getElementById("modalVerTarefa")).show();
+                    }
+                });
+
+                badge.appendChild(textSpan);
+                badge.appendChild(timeSpan);
+                badge.appendChild(btnRemove);
+                content.appendChild(badge);
+            } else {
+                const inputGroup = document.createElement("div");
+                inputGroup.className = "agenda-input-group";
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.className = "agenda-input";
+                input.placeholder = "Nova tarefa...";
+                input.dataset.hora = horaStr;
+                input.dataset.horaFim = horaFim;
+
+                const btnAdd = document.createElement("button");
+                btnAdd.className = "agenda-btn-add";
+                btnAdd.textContent = "+";
+                btnAdd.title = "Adicionar tarefa";
+
+                const handleAdd = () => {
+                    const texto = input.value.trim();
+                    if (!texto) return;
+                    input.disabled = true;
+                    btnAdd.disabled = true;
+                    adicionarTarefaNaAgenda(texto, agendaDataSelecionada, horaStr, horaFim, () => {
+                        input.value = "";
+                        input.disabled = false;
+                        btnAdd.disabled = false;
+                        input.focus();
+                    });
+                };
+
+                input.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") handleAdd();
+                });
+                btnAdd.addEventListener("click", handleAdd);
+
+                inputGroup.appendChild(input);
+                inputGroup.appendChild(btnAdd);
+                content.appendChild(inputGroup);
+
+                slot.addEventListener("click", () => input.focus());
+            }
+
+            slot.appendChild(timeLabel);
+            slot.appendChild(content);
+            agendaTimeline.appendChild(slot);
+        }
+    }
+
+    if (agendaTarefasCount) agendaTarefasCount.textContent = `${total} ${total === 1 ? "tarefa" : "tarefas"} agendada${total !== 1 ? "s" : ""}`;
+}
+
+function adicionarTarefaNaAgenda(texto, data, horaInicio, horaFim, callback) {
+    const dataFim = `${data}T23:59`;
+    const novaTarefa = {
+        texto: texto,
+        concluida: false,
+        status: "A Fazer",
+        dataInicio: data,
+        dataFim: dataFim,
+        descricao: `Agendado em ${data} às ${horaInicio}`,
+        urgenciaId: 3,
+        tagId: paginaAtivaId
+    };
+
+    fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(novaTarefa)
+    })
+    .then(res => res.json())
+    .then(tarefaCriada => {
+        return fetch(API_TIMEBLOCKS_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                tarefaId: tarefaCriada.id,
+                data: data,
+                horaInicio: horaInicio,
+                horaFim: horaFim,
+                tagId: paginaAtivaId
+            })
+        });
+    })
+    .then(() => {
+        carregarTimeBlocks();
+        carregarTarefas();
+        if (callback) callback();
+    })
+    .catch(err => {
+        console.error(err);
+        if (callback) callback();
+    });
+}
+
+function removerTimeBlock(id) {
+    fetch(`${API_TIMEBLOCKS_URL}/${id}`, { method: "DELETE" })
+        .then(() => {
+            carregarTimeBlocks();
+            carregarTarefas();
+        })
+        .catch(err => console.error(err));
+}
+
+if (inputAgendaData) {
+    inputAgendaData.addEventListener("change", () => {
+        agendaDataSelecionada = inputAgendaData.value;
+        carregarTimeBlocks();
+    });
+}
+
+if (btnAgendaHoje) {
+    btnAgendaHoje.addEventListener("click", () => {
+        agendaDataSelecionada = new Date().toISOString().split("T")[0];
+        if (inputAgendaData) inputAgendaData.value = agendaDataSelecionada;
+        carregarTimeBlocks();
+    });
+}
+
+
+
+// ----------------------------------------------------------------------
+// MIND MAP (MAPEAMENTO MENTAL)
+// ----------------------------------------------------------------------
+const mindmapContainer = document.getElementById("mindmapContainer");
+const listaMindMaps = document.getElementById("listaMindMaps");
+const btnNovoMindMap = document.getElementById("btnNovoMindMap");
+const mindMapSvg = document.getElementById("mindMapSvg");
+const mindMapCanvasWrapper = document.getElementById("mindMapCanvasWrapper");
+const btnMindMapAddNode = document.getElementById("btnMindMapAddNode");
+const btnMindMapConnect = document.getElementById("btnMindMapConnect");
+const btnMindMapDelete = document.getElementById("btnMindMapDelete");
+const btnMindMapToTask = document.getElementById("btnMindMapToTask");
+const btnMindMapExport = document.getElementById("btnMindMapExport");
+const btnSalvarMindMap = document.getElementById("btnSalvarMindMap");
+const inputMindMapTitulo = document.getElementById("inputMindMapTitulo");
+const mindMapStatus = document.getElementById("mindMapStatus");
+const btnMindMapAjuda = document.getElementById("btnMindMapAjuda");
+
+function mostrarMindMaps() {
+    modoMindMap = true;
+    modoAgenda = false;
+    modoCalendario = false;
+    modoHabitos = false;
+    if (kanbanContainer) kanbanContainer.style.display = "none";
+    if (financeiroContainer) financeiroContainer.style.display = "none";
+    if (calendarioContainer) calendarioContainer.style.display = "none";
+    if (habitosContainer) habitosContainer.style.display = "none";
+    if (agendaContainer) agendaContainer.style.display = "none";
+    if (mindmapContainer) mindmapContainer.style.display = "";
+    if (contadorTarefasEl) contadorTarefasEl.style.display = "none";
+    if (btnAbrirGaleriaNotasEl) btnAbrirGaleriaNotasEl.style.display = "none";
+    if (btnAbrirModalCriarEl) btnAbrirModalCriarEl.style.display = "none";
+    if (btnLimparTodasEl) btnLimparTodasEl.style.display = "none";
+    if (inputPesquisaEl) inputPesquisaEl.style.display = "none";
+    if (btnLimparTransacoes) btnLimparTransacoes.style.display = "none";
+    if (tituloPaginaAtiva) tituloPaginaAtiva.textContent = "🧠 Mapas Mentais";
+    carregarMindMaps();
+}
+
+function carregarMindMaps() {
+    if (!paginaAtivaId) {
+        if (listaMindMaps) listaMindMaps.innerHTML = '<span class="text-muted small">Selecione uma página primeiro.</span>';
+        return;
+    }
+    fetch(`${API_MINDMAPS_URL}/${paginaAtivaId}`)
+        .then(res => res.json())
+        .then(dados => {
+            mindMaps = dados;
+            renderizarMindMaps();
+        })
+        .catch(err => console.error(err));
+}
+
+function renderizarMindMaps() {
+    if (!listaMindMaps) return;
+    listaMindMaps.innerHTML = "";
+    if (mindMaps.length === 0) {
+        listaMindMaps.innerHTML = '<div class="text-center text-muted py-5 w-100"><p>Nenhum mapa mental criado.</p><button class="btn btn-success btn-sm" id="btnCriarPrimeiroMindMap">+ Criar Primeiro Mapa</button></div>';
+        const btn = document.getElementById("btnCriarPrimeiroMindMap");
+        if (btn) btn.addEventListener("click", () => abrirMindMapEditor(null));
+        return;
+    }
+    mindMaps.forEach(m => {
+        let dados;
+        try { dados = JSON.parse(m.dados); } catch(e) { dados = { nodes: [], connections: [] }; }
+        const card = document.createElement("div");
+        card.className = "mindmap-card";
+        card.innerHTML = `
+            <div class="mindmap-card-title">${m.titulo}</div>
+            <div class="mindmap-card-meta">${dados.nodes?.length || 0} nós, ${dados.connections?.length || 0} conexões</div>
+            <div class="d-flex gap-1 mt-2">
+                <button class="btn btn-sm btn-outline-primary flex-fill editar-mindmap" data-id="${m.id}">✏️ Editar</button>
+                <button class="btn btn-sm btn-outline-danger excluir-mindmap" data-id="${m.id}">&times;</button>
+            </div>
+        `;
+        card.querySelector(".editar-mindmap").addEventListener("click", (e) => {
+            e.stopPropagation();
+            abrirMindMapEditor(m);
+        });
+        card.querySelector(".excluir-mindmap").addEventListener("click", (e) => {
+            e.stopPropagation();
+            excluirMindMap(m.id);
+        });
+        listaMindMaps.appendChild(card);
+    });
+}
+
+function abrirMindMapEditor(mindMap) {
+    mindMapEditandoId = mindMap ? mindMap.id : null;
+    if (mindMap) {
+        if (inputMindMapTitulo) inputMindMapTitulo.value = mindMap.titulo;
+        try {
+            const dados = JSON.parse(mindMap.dados);
+            mindMapNodes = dados.nodes || [];
+            mindMapConnections = dados.connections || [];
+        } catch(e) {
+            mindMapNodes = [];
+            mindMapConnections = [];
+        }
+    } else {
+        if (inputMindMapTitulo) inputMindMapTitulo.value = "Novo Mapa Mental";
+        mindMapNodes = [];
+        mindMapConnections = [];
+    }
+    mindMapNextNodeId = mindMapNodes.reduce((max, n) => Math.max(max, n.id || 0), 0) + 1;
+    if (mindMapNextNodeId < 1) mindMapNextNodeId = 1;
+    mindMapSelectedNodeId = null;
+    mindMapConnectMode = false;
+    mindMapConnectFrom = null;
+    if (btnMindMapConnect) btnMindMapConnect.className = "btn btn-sm btn-outline-secondary";
+    if (btnMindMapToTask) btnMindMapToTask.disabled = true;
+    if (mindMapStatus) mindMapStatus.textContent = "Clique no fundo ou use o botão + Nó para criar";
+
+    renderizarMindMapDivs();
+    renderizarMindMapSvg();
+
+    const elModal = document.getElementById("modalMindMapEditor");
+    if (elModal) {
+        const modal = new bootstrap.Modal(elModal, { focus: false });
+        modal.show();
+        setTimeout(() => {
+            const wrapper = document.getElementById("mindMapCanvasWrapper");
+            if (wrapper) {
+                const rect = wrapper.getBoundingClientRect();
+                const svg = document.getElementById("mindMapSvg");
+                if (svg) {
+                    svg.setAttribute("width", Math.max(1000, rect.width - 4));
+                    svg.setAttribute("height", Math.max(600, rect.height - 4));
+                }
+            }
+        }, 300);
+    }
+}
+
+function renderizarMindMapSvg() {
+    if (!mindMapSvg) return;
+    const svg = mindMapSvg;
+
+    while (svg.firstChild) {
+        svg.removeChild(svg.firstChild);
+    }
+
+    const wrapper = document.getElementById("mindMapCanvasWrapper");
+    const wrapW = wrapper ? wrapper.clientWidth : 1000;
+    const wrapH = wrapper ? wrapper.clientHeight : 600;
+    svg.setAttribute("width", Math.max(wrapW, 200));
+    svg.setAttribute("height", Math.max(wrapH, 200));
+
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+    marker.setAttribute("id", "mmArrow");
+    marker.setAttribute("markerWidth", "10");
+    marker.setAttribute("markerHeight", "7");
+    marker.setAttribute("refX", "10");
+    marker.setAttribute("refY", "3.5");
+    marker.setAttribute("orient", "auto");
+    const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    poly.setAttribute("points", "0 0, 10 3.5, 0 7");
+    poly.setAttribute("fill", "#64748b");
+    marker.appendChild(poly);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    mindMapConnections.forEach(conn => {
+        const fromNode = mindMapNodes.find(n => n.id === conn.from);
+        const toNode = mindMapNodes.find(n => n.id === conn.to);
+        if (!fromNode || !toNode) return;
+        const fromW = Math.max(80, (fromNode.texto?.length || 4) * 9 + 20);
+        const toW = Math.max(80, (toNode.texto?.length || 4) * 9 + 20);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", fromNode.x + fromW / 2);
+        line.setAttribute("y1", fromNode.y + 25);
+        line.setAttribute("x2", toNode.x + toW / 2);
+        line.setAttribute("y2", toNode.y + 25);
+        line.setAttribute("stroke", "#64748b");
+        line.setAttribute("stroke-width", "2");
+        line.setAttribute("marker-end", "url(#mmArrow)");
+        line.dataset.from = conn.from;
+        line.dataset.to = conn.to;
+        line.style.cursor = "pointer";
+        svg.appendChild(line);
+    });
+}
+
+function renderizarMindMapDivs() {
+    const wrapper = document.getElementById("mindMapCanvasWrapper");
+    if (!wrapper) return;
+
+    // Remove old node divs, keep SVG
+    wrapper.querySelectorAll(".mm-node").forEach(el => el.remove());
+
+    mindMapNodes.forEach(node => {
+        const div = document.createElement("div");
+        div.className = "mm-node";
+        const isSelected = node.id === mindMapSelectedNodeId;
+        const isConnectOrigin = mindMapConnectMode && mindMapConnectFrom === node.id;
+        if (isSelected) div.classList.add("selected");
+        if (isConnectOrigin) div.classList.add("connect-origin");
+        div.dataset.id = node.id;
+        div.textContent = node.texto || "Nó";
+        div.style.left = node.x + "px";
+        div.style.top = node.y + "px";
+
+        div.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (mindMapConnectMode) {
+                if (mindMapConnectFrom === null) {
+                    mindMapConnectFrom = node.id;
+                    if (mindMapStatus) mindMapStatus.textContent = `🔗 Origem: "${node.texto}". Agora clique no nó de destino.`;
+                    renderizarMindMapDivs();
+                    return;
+                }
+                if (mindMapConnectFrom !== node.id) {
+                    const exists = mindMapConnections.some(c => c.from === mindMapConnectFrom && c.to === node.id);
+                    if (!exists) {
+                        mindMapConnections.push({ from: mindMapConnectFrom, to: node.id });
+                    }
+                    mindMapConnectMode = false;
+                    mindMapConnectFrom = null;
+                    if (btnMindMapConnect) btnMindMapConnect.className = "btn btn-sm btn-outline-secondary";
+                    if (mindMapStatus) mindMapStatus.textContent = "Conexão criada!";
+                    renderizarMindMapDivs();
+                    renderizarMindMapSvg();
+                    return;
+                }
+                return;
+            }
+            if (btnMindMapDelete && btnMindMapDelete.classList.contains("btn-dark")) {
+                const idx = mindMapNodes.findIndex(n => n.id === node.id);
+                if (idx >= 0) {
+                    mindMapConnections = mindMapConnections.filter(c => c.from !== node.id && c.to !== node.id);
+                    mindMapNodes.splice(idx, 1);
+                    mindMapSelectedNodeId = null;
+                    if (btnMindMapToTask) btnMindMapToTask.disabled = true;
+                    if (mindMapStatus) mindMapStatus.textContent = "Nó removido.";
+                    renderizarMindMapDivs();
+                    renderizarMindMapSvg();
+                }
+                return;
+            }
+            mindMapSelectedNodeId = node.id;
+            if (btnMindMapToTask) btnMindMapToTask.disabled = false;
+            renderizarMindMapDivs();
+        });
+
+        div.addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            Swal.fire({
+                title: "Editar Nó",
+                input: "text",
+                inputValue: node.texto || "",
+                showCancelButton: true,
+                confirmButtonText: "Salvar",
+                cancelButtonText: "Cancelar",
+                focusConfirm: false,
+                didOpen: () => {
+                    const container = Swal.getContainer();
+                    if (container) {
+                        container.addEventListener('focusin', (e) => e.stopPropagation(), true);
+                    }
+                    setTimeout(() => {
+                        const input = Swal.getInput();
+                        if (input) input.focus();
+                    }, 50);
+                },
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) return "O texto não pode ficar vazio.";
+                }
+            }).then(result => {
+                if (result.isConfirmed && result.value?.trim()) {
+                    node.texto = result.value.trim();
+                    renderizarMindMapDivs();
+                    renderizarMindMapSvg();
+                }
+            });
+        });
+
+        // Drag
+        let dragOffX = 0, dragOffY = 0, dragging = false, dragMoved = false;
+        div.addEventListener("mousedown", (e) => {
+            if (mindMapConnectMode || (btnMindMapDelete && btnMindMapDelete.classList.contains("btn-dark"))) return;
+            const rect = wrapper.getBoundingClientRect();
+            dragOffX = e.clientX - rect.left - node.x;
+            dragOffY = e.clientY - rect.top - node.y;
+            dragging = true;
+            dragMoved = false;
+
+            const onMove = (ev) => {
+                if (!dragging) return;
+                dragMoved = true;
+                const r = wrapper.getBoundingClientRect();
+                node.x = Math.max(0, ev.clientX - r.left - dragOffX);
+                node.y = Math.max(0, ev.clientY - r.top - dragOffY);
+                renderizarMindMapDivs();
+                renderizarMindMapSvg();
+            };
+            const onUp = () => {
+                dragging = false;
+                document.removeEventListener("mousemove", onMove);
+                document.removeEventListener("mouseup", onUp);
+            };
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+        });
+
+        // Click after drag guard
+        div.addEventListener("click", (e) => {
+            if (dragMoved) { e.stopPropagation(); dragMoved = false; }
+        }, true);
+
+        wrapper.appendChild(div);
+    });
+}
+
+function mmCriarNo(x, y) {
+    Swal.fire({
+        title: "Novo Nó",
+        input: "text",
+        inputPlaceholder: "Texto do nó...",
+        showCancelButton: true,
+        confirmButtonText: "Criar",
+        cancelButtonText: "Cancelar",
+        focusConfirm: false,
+        didOpen: () => {
+            const container = Swal.getContainer();
+            if (container) {
+                container.addEventListener('focusin', (e) => e.stopPropagation(), true);
+            }
+            setTimeout(() => {
+                const input = Swal.getInput();
+                if (input) input.focus();
+            }, 50);
+        },
+        inputValidator: (value) => {
+            if (!value || !value.trim()) return "Digite um texto para o nó.";
+        }
+    }).then(result => {
+        if (result.isConfirmed && result.value?.trim()) {
+            const node = {
+                id: mindMapNextNodeId++,
+                x: Math.max(0, x - 60),
+                y: Math.max(0, y - 25),
+                texto: result.value.trim(),
+                cor: "#e2e8f0"
+            };
+            mindMapNodes.push(node);
+            mindMapSelectedNodeId = node.id;
+            if (btnMindMapToTask) btnMindMapToTask.disabled = false;
+            renderizarMindMapDivs();
+            renderizarMindMapSvg();
+            if (mindMapStatus) mindMapStatus.textContent = "Nó criado! Selecione-o ou use 'Criar Tarefa'.";
+        }
+    });
+}
+
+// Click on empty wrapper area to create node
+if (mindMapCanvasWrapper) {
+    mindMapCanvasWrapper.addEventListener("click", (e) => {
+        if (e.target !== mindMapCanvasWrapper && !e.target.classList.contains("mindmap-svg")) return;
+        if (mindMapConnectMode || (btnMindMapDelete && btnMindMapDelete.classList.contains("btn-dark"))) return;
+        const wrapper = mindMapCanvasWrapper;
+        const rect = wrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left + wrapper.scrollLeft;
+        const y = e.clientY - rect.top + wrapper.scrollTop;
+        mmCriarNo(x, y);
+    });
+}
+
+// Also create node on double-click wrapper background (to be safe)
+if (mindMapCanvasWrapper) {
+    mindMapCanvasWrapper.addEventListener("dblclick", (e) => {
+        if (e.target !== mindMapCanvasWrapper && !e.target.classList.contains("mindmap-svg")) return;
+        if (mindMapConnectMode || (btnMindMapDelete && btnMindMapDelete.classList.contains("btn-dark"))) return;
+        const wrapper = mindMapCanvasWrapper;
+        const rect = wrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left + wrapper.scrollLeft;
+        const y = e.clientY - rect.top + wrapper.scrollTop;
+        mmCriarNo(x, y);
+    });
+}
+
+if (btnMindMapAddNode) {
+    btnMindMapAddNode.addEventListener("click", () => {
+        const wrapper = document.getElementById("mindMapCanvasWrapper");
+        const w = wrapper ? wrapper.clientWidth : 800;
+        const h = wrapper ? wrapper.clientHeight : 400;
+        mmCriarNo(50 + Math.random() * Math.max(50, w - 200), 50 + Math.random() * Math.max(50, h - 150));
+    });
+}
+
+if (btnMindMapConnect) {
+    btnMindMapConnect.addEventListener("click", () => {
+        mindMapConnectMode = !mindMapConnectMode;
+        mindMapConnectFrom = null;
+        btnMindMapConnect.className = mindMapConnectMode ? "btn btn-sm btn-dark" : "btn btn-sm btn-outline-secondary";
+        if (mindMapStatus) {
+            mindMapStatus.textContent = mindMapConnectMode
+                ? "🔗 Clique no nó de origem, depois no nó de destino"
+                : "Modo conexão desativado";
+        }
+    });
+}
+
+if (btnMindMapDelete) {
+    btnMindMapDelete.addEventListener("click", () => {
+        const isActive = btnMindMapDelete.classList.contains("btn-dark");
+        btnMindMapDelete.className = isActive ? "btn btn-sm btn-outline-danger" : "btn btn-sm btn-dark";
+        if (mindMapStatus) {
+            mindMapStatus.textContent = isActive
+                ? "Clique no nó ou conexão para remover"
+                : "🗑️ Clique em um nó ou conexão para remover";
+        }
+    });
+}
+
+function _swalComFocus(opt) {
+    if (typeof opt === 'string') {
+        opt = { title: arguments[0], text: arguments[1], icon: arguments[2] };
+    }
+    const origDidOpen = opt.didOpen;
+    opt.didOpen = (el) => {
+        const c = Swal.getContainer();
+        if (c) c.addEventListener('focusin', (e) => e.stopPropagation(), true);
+        if (origDidOpen) origDidOpen(el);
+    };
+    return Swal.fire(opt);
+}
+
+if (btnMindMapToTask) {
+    btnMindMapToTask.addEventListener("click", () => {
+        console.log("btnMindMapToTask clicked, selectedNodeId:", mindMapSelectedNodeId, "nodes:", mindMapNodes.length);
+        const node = mindMapNodes.find(n => n.id === mindMapSelectedNodeId);
+        if (!node || !node.texto) {
+            _swalComFocus("Atenção", "Selecione um nó com texto primeiro.", "warning");
+            return;
+        }
+        if (!paginaAtivaId) {
+            _swalComFocus("Atenção", "Selecione uma página primeiro.", "warning");
+            return;
+        }
+        const hoje = new Date();
+        const dataStr = hoje.toISOString().split("T")[0];
+        const fimStr = new Date(hoje.getTime() + 86400000).toISOString().split("T")[0] + "T23:59";
+        const novaTarefa = {
+            texto: node.texto,
+            concluida: false,
+            status: "A Fazer",
+            dataInicio: dataStr,
+            dataFim: fimStr,
+            descricao: `Criado a partir do mapa mental: "${inputMindMapTitulo ? inputMindMapTitulo.value : "Sem título"}"`,
+        urgenciaId: 5,
+            tagId: paginaAtivaId
+        };
+        fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(novaTarefa)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            _swalComFocus("Sucesso!", "Nó convertido em tarefa!", "success");
+            carregarTarefas();
+        })
+        .catch(err => {
+            console.error(err);
+            _swalComFocus("Erro", "Não foi possível criar a tarefa. Verifique o servidor.", "error");
+        });
+    });
+}
+
+if (btnMindMapExport) {
+    btnMindMapExport.addEventListener("click", () => exportMindMap());
+}
+
+function exportMindMap() {
+    if (!mindMapSvg) return;
+    const svgData = new XMLSerializer().serializeToString(mindMapSvg);
+    const canvas = document.createElement("canvas");
+    const svgSize = mindMapSvg.getBoundingClientRect();
+    canvas.width = svgSize.width || 1000;
+    canvas.height = svgSize.height || 600;
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        const link = document.createElement("a");
+        link.download = `${inputMindMapTitulo ? inputMindMapTitulo.value.trim() : "mapa-mental"}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    };
+    img.src = url;
+}
+
+if (btnSalvarMindMap) {
+    btnSalvarMindMap.addEventListener("click", () => {
+        if (!paginaAtivaId) {
+            Swal.fire("Atenção", "Selecione uma página primeiro.", "warning");
+            return;
+        }
+        const titulo = inputMindMapTitulo ? inputMindMapTitulo.value.trim() : "Mapa Mental";
+        if (!titulo) {
+            Swal.fire("Atenção", "Digite um título para o mapa.", "warning");
+            return;
+        }
+        const dados = JSON.stringify({ nodes: mindMapNodes, connections: mindMapConnections });
+        const body = { titulo, dados, tagId: paginaAtivaId };
+
+        const request = mindMapEditandoId
+            ? fetch(`${API_MINDMAPS_URL}/${mindMapEditandoId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+            : fetch(API_MINDMAPS_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+        request
+            .then(() => {
+                bootstrap.Modal.getInstance(document.getElementById("modalMindMapEditor")).hide();
+                Swal.fire("Sucesso!", "Mapa mental salvo.", "success");
+                carregarMindMaps();
+            })
+            .catch(err => console.error(err));
+    });
+}
+
+function excluirMindMap(id) {
+    const map = mindMaps.find(m => m.id === id);
+    Swal.fire({
+        title: "Excluir?",
+        text: `Apagar "${map?.titulo || "mapa"}"?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sim",
+        cancelButtonText: "Não"
+    }).then(r => {
+        if (r.isConfirmed) {
+            fetch(`${API_MINDMAPS_URL}/${id}`, { method: "DELETE" })
+                .then(() => carregarMindMaps())
+                .catch(err => console.error(err));
+        }
+    });
+}
+
+if (btnNovoMindMap) {
+    btnNovoMindMap.addEventListener("click", () => {
+        if (!paginaAtivaId) {
+            Swal.fire("Atenção", "Selecione uma página primeiro.", "warning");
+            return;
+        }
+        abrirMindMapEditor(null);
+    });
+}
+
+if (btnMindMapAjuda) {
+    btnMindMapAjuda.addEventListener("click", () => {
+        Swal.fire({
+            title: "🧠 Mapa Mental - Ajuda",
+            html: `
+                <div style="text-align:left;font-size:0.9rem;">
+                    <p><b>🖱️ Duplo-clique</b> no canvas vazio para criar um nó.</p>
+                    <p><b>🔄 Arraste</b> os nós para reposicionar.</p>
+                    <p><b>🔗 Clique em "Conectar"</b>, depois clique no nó de origem e no nó de destino.</p>
+                    <p><b>✏️ Duplo-clique</b> em um nó para editar o texto.</p>
+                    <p><b>🗑️ Clique em "Remover"</b>, depois clique em um nó ou conexão para apagar.</p>
+                    <p><b>➜ Criar Tarefa</b> converte o nó selecionado em uma tarefa real.</p>
+                </div>
+            `,
+            confirmButtonText: "OK"
+        });
+    });
+}
+
+// Recalculate SVG size when modal opens
+const modalMindMapEditor = document.getElementById("modalMindMapEditor");
+if (modalMindMapEditor) {
+    modalMindMapEditor.addEventListener("shown.bs.modal", () => {
+        const wrapper = document.getElementById("mindMapCanvasWrapper");
+        if (wrapper) {
+            const rect = wrapper.getBoundingClientRect();
+            const svg = document.getElementById("mindMapSvg");
+            if (svg) {
+                svg.setAttribute("width", Math.max(200, rect.width - 4));
+                svg.setAttribute("height", Math.max(200, rect.height - 4));
+                renderizarMindMapDivs();
+                renderizarMindMapSvg();
+            }
+        }
+    });
 }
 
 inicializarSistema();

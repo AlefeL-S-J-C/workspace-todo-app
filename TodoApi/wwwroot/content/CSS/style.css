@@ -565,6 +565,342 @@ body.dark-mode .financeiro-tabela thead {
     flex: 1;
 }
 
+/* ===== Time Blocking (Agenda) ===== */
+.agenda-container {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.agenda-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.agenda-slot {
+    display: flex;
+    align-items: stretch;
+    min-height: 44px;
+    border-radius: 6px;
+    transition: background 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    position: relative;
+}
+
+.agenda-slot:hover {
+    background-color: var(--bg-hover, #f1f3f5);
+}
+
+.agenda-slot.has-task {
+    cursor: default;
+}
+
+.agenda-time {
+    width: 60px;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    border-right: 2px solid var(--border-color, #e3e5e8);
+    margin-right: 10px;
+    user-select: none;
+}
+
+.agenda-slot:first-child .agenda-time {
+    border-right-color: transparent;
+}
+
+.agenda-slot-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    min-height: 44px;
+    gap: 8px;
+}
+
+.agenda-input-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+}
+
+.agenda-input {
+    flex: 1;
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    background: var(--bg-input, #f9fafb);
+    color: var(--text-main, #1e293b);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    min-width: 0;
+}
+
+.agenda-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.agenda-input::placeholder {
+    color: var(--text-muted, #9ca3af);
+    font-style: italic;
+    font-size: 0.75rem;
+}
+
+.agenda-btn-add {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.agenda-btn-add:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+.agenda-btn-add:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+}
+
+body.dark-mode .agenda-input {
+    background: var(--bg-hover, #374151);
+    border-color: var(--border-color, #4b5563);
+    color: var(--text-main, #f9fafb);
+}
+
+.agenda-task-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-card, white);
+    border: 1px solid var(--border-color, #e3e5e8);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    width: 100%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+
+.agenda-task-badge:hover {
+    transform: translateX(2px);
+}
+
+.agenda-task-badge .task-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-main, #1e293b);
+}
+
+.agenda-task-badge .task-time {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-muted, #94a3b8);
+    white-space: nowrap;
+}
+
+.agenda-task-badge .btn-remove-slot {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 2px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+
+.agenda-task-badge .btn-remove-slot:hover {
+    opacity: 1;
+}
+
+.agenda-half-hour {
+    font-size: 0.65rem;
+    color: var(--text-muted, #cbd5e1);
+    padding-left: 70px;
+    min-height: 22px;
+    display: flex;
+    align-items: center;
+}
+
+.agenda-half-hour .empty-hint {
+    font-size: 0.65rem;
+    color: var(--text-muted, #cbd5e1);
+    font-style: italic;
+}
+
+
+
+/* ===== Mind Map ===== */
+.mindmap-container {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.mindmap-canvas-wrapper {
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--border-color, #e3e5e8);
+    border-radius: 8px;
+    background: var(--bg-card, #ffffff);
+    position: relative;
+    min-height: 400px;
+    cursor: crosshair;
+}
+
+.mindmap-svg {
+    display: block;
+    cursor: default;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.mindmap-svg line {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.mm-node {
+    position: absolute;
+    min-width: 80px;
+    max-width: 220px;
+    padding: 10px 16px;
+    background: #e2e8f0;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    color: #1e293b;
+    cursor: move;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 2;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.mm-node:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.mm-node.selected {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+}
+
+.mm-node.connect-origin {
+    border-color: #f59e0b;
+    animation: mindmap-pulse 1s infinite;
+}
+
+body.dark-mode .mm-node {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+}
+
+body.dark-mode .mm-node.selected {
+    border-color: #60a5fa;
+}
+
+.mindmap-toolbar .btn {
+    font-size: 0.75rem !important;
+    padding: 4px 10px !important;
+}
+
+body.dark-mode .mindmap-svg {
+    background-color: var(--bg-card, #2d2d2d);
+}
+
+body.dark-mode .mindmap-node.selected rect {
+    stroke: #60a5fa !important;
+}
+
+.mindmap-node.connect-origin rect {
+    stroke: #f59e0b !important;
+    stroke-width: 3;
+    stroke-dasharray: 6,3;
+    animation: mindmap-pulse 1s infinite;
+}
+
+@keyframes mindmap-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.mindmap-card {
+    width: 200px;
+    border: 1px solid var(--border-color, #e3e5e8);
+    border-radius: 12px;
+    padding: 1rem;
+    background: var(--bg-card, white);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mindmap-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.mindmap-card-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-main, #1e293b);
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mindmap-card-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted, #6b7280);
+}
+
+body.dark-mode .mindmap-card {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .mindmap-card-title {
+    color: var(--text-main) !important;
+}
+
 #calendarioView {
     min-height: 500px;
     background: var(--bg-card, #ffffff);
@@ -948,4 +1284,8 @@ body.dark-mode .ql-picker-options {
 
 body.dark-mode .ql-picker-label {
     color: var(--text-main) !important;
+}
+
+.swal2-container {
+    z-index: 9999 !important;
 }

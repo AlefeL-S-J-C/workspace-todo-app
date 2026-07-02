@@ -14,6 +14,8 @@ namespace TodoApi
         public DbSet<TransacaoFinanceira> TransacoesFinanceiras { get; set; }
         public DbSet<Habito> Habitos { get; set; }
         public DbSet<RegistroHabito> RegistroHabitos { get; set; }
+        public DbSet<TimeBlock> TimeBlocks { get; set; }
+        public DbSet<MindMap> MindMaps { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -60,6 +62,24 @@ namespace TodoApi
                 .HasOne(r => r.Habito)
                 .WithMany(h => h.Registros)
                 .HasForeignKey(r => r.HabitoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TimeBlock>()
+                .HasOne(t => t.Tarefa)
+                .WithMany()
+                .HasForeignKey(t => t.TarefaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TimeBlock>()
+                .HasOne(t => t.Tag)
+                .WithMany()
+                .HasForeignKey(t => t.TagId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MindMap>()
+                .HasOne(m => m.Tag)
+                .WithMany()
+                .HasForeignKey(m => m.TagId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Urgencia>().HasData(

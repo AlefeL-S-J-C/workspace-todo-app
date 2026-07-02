@@ -517,4 +517,100 @@ app.MapGet("/calendario", async (AppDbContext db) =>
     return Results.Ok(eventos);
 });
 
+// ===== TimeBlock (Agenda Diária) =====
+app.MapGet("/timeblocks/{data}/{tagId}", async (string data, int tagId, AppDbContext db) =>
+{
+    var blocks = await db.TimeBlocks
+        .Include(t => t.Tarefa)
+            .ThenInclude(t => t.Urgencia)
+        .Where(t => t.Data == data && t.TagId == tagId)
+        .OrderBy(t => t.HoraInicio)
+        .ToListAsync();
+    return Results.Ok(blocks);
+});
+
+app.MapPost("/timeblocks", async (TimeBlock novo, AppDbContext db) =>
+{
+    if (novo.TarefaId == 0 || string.IsNullOrWhiteSpace(novo.Data) || string.IsNullOrWhiteSpace(novo.HoraInicio))
+        return Results.BadRequest(new { mensagem = "Dados incompletos." });
+
+    db.TimeBlocks.Add(novo);
+    await db.SaveChangesAsync();
+    return Results.Created($"/timeblocks/{novo.Id}", novo);
+});
+
+app.MapPut("/timeblocks/{id}", async (int id, TimeBlock atualizado, AppDbContext db) =>
+{
+    var block = await db.TimeBlocks.FindAsync(id);
+    if (block is null) return Results.NotFound();
+
+    block.HoraInicio = atualizado.HoraInicio;
+    block.HoraFim = atualizado.HoraFim;
+    block.Data = atualizado.Data;
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+app.MapDelete("/timeblocks/{id}", async (int id, AppDbContext db) =>
+{
+    var block = await db.TimeBlocks.FindAsync(id);
+    if (block is null) return Results.NotFound();
+
+    db.TimeBlocks.Remove(block);
+    await db.SaveChangesAsync();
+    return Results.Ok();
+});
+
+app.MapDelete("/timeblocks/limpar/{tagId}", async (int tagId, AppDbContext db) =>
+{
+    var blocks = await db.TimeBlocks.Where(t => t.TagId == tagId).ToListAsync();
+    if (!blocks.Any()) return Results.Ok();
+    db.TimeBlocks.RemoveRange(blocks);
+    await db.SaveChangesAsync();
+    return Results.Ok();
+});
+
+// ===== MindMap (Mapeamento Mental) =====
+app.MapGet("/mindmaps/{tagId}", async (int tagId, AppDbContext db) =>
+{
+    var maps = await db.MindMaps.Where(m => m.TagId == tagId).ToListAsync();
+    return Results.Ok(maps);
+});
+
+app.MapPost("/mindmaps", async (MindMap novo, AppDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(novo.Titulo))
+        return Results.BadRequest(new { mensagem = "O título é obrigatório." });
+
+    if (string.IsNullOrWhiteSpace(novo.Dados))
+        novo.Dados = "{\"nodes\":[],\"connections\":[]}";
+
+    db.MindMaps.Add(novo);
+    await db.SaveChangesAsync();
+    return Results.Created($"/mindmaps/{novo.Id}", novo);
+});
+
+app.MapPut("/mindmaps/{id}", async (int id, MindMap atualizado, AppDbContext db) =>
+{
+    var map = await db.MindMaps.FindAsync(id);
+    if (map is null) return Results.NotFound();
+
+    map.Titulo = atualizado.Titulo ?? map.Titulo;
+    map.Dados = atualizado.Dados ?? map.Dados;
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+app.MapDelete("/mindmaps/{id}", async (int id, AppDbContext db) =>
+{
+    var map = await db.MindMaps.FindAsync(id);
+    if (map is null) return Results.NotFound();
+
+    db.MindMaps.Remove(map);
+    await db.SaveChangesAsync();
+    return Results.Ok();
+});
+
 app.Run();
