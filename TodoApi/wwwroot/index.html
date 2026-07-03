@@ -452,7 +452,20 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" id="btnFecharQuill"></button>
                 </div>
                 <div class="modal-body p-2 d-flex flex-column" style="min-height: 400px;">
+                    <div class="editor-tabs d-flex gap-1 mb-2">
+                        <button class="btn btn-sm btn-primary editor-tab" data-editor="quill">📝 Texto Rico</button>
+                        <button class="btn btn-sm btn-outline-success editor-tab" data-editor="blocks">🧱 Blocos</button>
+                    </div>
                     <div id="quillEditor" style="flex: 1; min-height: 350px;"></div>
+                    <div id="blockEditorContainer" class="block-editor-container" style="display:none; flex:1; min-height:350px;">
+                        <div id="blockEditorBlocks"></div>
+                    </div>
+                    <div id="slashMenu" class="slash-menu" style="display:none;">
+                        <div class="slash-menu-item" data-type="heading">🔤 Título</div>
+                        <div class="slash-menu-item" data-type="checklist">✅ Checklist</div>
+                        <div class="slash-menu-item" data-type="code">💻 Código</div>
+                        <div class="slash-menu-item" data-type="table">📊 Tabela</div>
+                    </div>
                 </div>
                 <div class="modal-footer d-flex gap-2">
                     <button type="button" class="btn btn-outline-primary" id="btnResumirNotaIA">🤖 Resumir com IA</button>

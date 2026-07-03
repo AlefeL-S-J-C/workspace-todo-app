@@ -30,6 +30,9 @@ let quillCriar = null;
 let quillEditar = null;
 let quillNota = null;
 let notaQuillEditandoId = null;
+let blockEditorEditandoId = null;
+let blockEditorBlocks = [];
+let blockEditorIdCounter = 0;
 let habitos = [];
 let modoHabitos = false;
 let modoAgenda = false;
@@ -1340,6 +1343,66 @@ function renderizarNotas(notas) {
     }
 
     notas.forEach(nota => {
+        if (nota.tipo === "blocks") {
+            const card = document.createElement("div");
+            card.className = "nota-card nota-card-blocks d-flex flex-column";
+            card.style.width = "200px";
+            card.style.height = "160px";
+
+            let blocks = [];
+            try { blocks = JSON.parse(nota.conteudo); } catch(e) { blocks = []; }
+            const preview = beBlocksToTextPreview(blocks);
+
+            const previewDiv = document.createElement("div");
+            previewDiv.className = "blocks-preview flex-grow-1 p-2 small text-muted";
+            previewDiv.textContent = preview || "Nota vazia";
+
+            const divTitulo = document.createElement("div");
+            divTitulo.className = "bg-dark bg-opacity-75 text-white p-2 rounded small fw-bold text-center d-flex flex-column gap-2";
+
+            const headerCard = document.createElement("div");
+            headerCard.className = "d-flex justify-content-between align-items-center w-100";
+            headerCard.innerHTML = `<span class="text-truncate" style="max-width: 100px;">${nota.titulo}</span> <span class="badge bg-success">blocos</span>`;
+
+            const divAcoes = document.createElement("div");
+            divAcoes.className = "d-flex justify-content-between align-items-center w-100 mt-1";
+
+            const btnEditar = document.createElement("button");
+            btnEditar.className = "btn btn-sm p-0 border-0 bg-transparent";
+            btnEditar.innerHTML = `<img width="16" height="16" src="https://img.icons8.com/ios-glyphs/30/edit--v1.png"/>`;
+            btnEditar.onclick = (e) => {
+                e.stopPropagation();
+                blockEditorEditandoId = nota.id;
+                beLoadData(nota.conteudo);
+                if (inputTituloQuill) inputTituloQuill.value = nota.titulo;
+                const elModal = document.getElementById('modalQuillEditor');
+                if (elModal) {
+                    const modal = new bootstrap.Modal(elModal);
+                    modal.show();
+                    setTimeout(() => beSwitchTab('blocks'), 100);
+                }
+            };
+
+            const btnDel = document.createElement("button");
+            btnDel.className = "btn btn-sm p-0 border-0 bg-transparent text-danger fw-bold fs-5";
+            btnDel.innerHTML = "&times;";
+            btnDel.style.lineHeight = "1";
+            btnDel.onclick = (e) => {
+                e.stopPropagation();
+                fetch(`${API_NOTAS_URL}/${nota.id}`, { method: "DELETE" }).then(() => carregarNotas());
+            };
+
+            divAcoes.appendChild(btnEditar);
+            divAcoes.appendChild(btnDel);
+
+            divTitulo.appendChild(headerCard);
+            divTitulo.appendChild(divAcoes);
+            card.appendChild(previewDiv);
+            card.appendChild(divTitulo);
+            listaNotas.appendChild(card);
+            return;
+        }
+
         let arrayDestaNota = [];
         try {
             arrayDestaNota = JSON.parse(nota.imagemBase64);
@@ -2173,17 +2236,46 @@ if (modalCriarTarefa) {
     });
 }
 
-// Reset Quill note modal state
 const modalQuillEditor = document.getElementById("modalQuillEditor");
+let editorActiveTab = 'quill';
+
+function beSwitchTab(tab) {
+    editorActiveTab = tab;
+    const quillEl = document.getElementById('quillEditor');
+    const blockEl = document.getElementById('blockEditorContainer');
+    const tabs = document.querySelectorAll('.editor-tab');
+    tabs.forEach(t => {
+        const isActive = t.dataset.editor === tab;
+        t.classList.toggle('btn-primary', isActive && tab === 'quill');
+        t.classList.toggle('btn-outline-primary', !isActive && tab === 'quill');
+        t.classList.toggle('btn-success', isActive && tab === 'blocks');
+        t.classList.toggle('btn-outline-success', !isActive && tab === 'blocks');
+    });
+    if (quillEl) quillEl.style.display = tab === 'quill' ? '' : 'none';
+    if (blockEl) blockEl.style.display = tab === 'blocks' ? '' : 'none';
+    if (tab === 'blocks') {
+        beInit();
+    }
+}
+
+// Reset modal state
 if (modalQuillEditor) {
     modalQuillEditor.addEventListener('show.bs.modal', () => {
+        if (!paginaAtivaId) {
+            Swal.fire("Atenção", "Selecione uma página primeiro!", "warning");
+            const modal = bootstrap.Modal.getInstance(modalQuillEditor);
+            if (modal) modal.hide();
+            return;
+        }
         if (quillNota) quillNota.root.innerHTML = '';
         if (inputTituloQuill) inputTituloQuill.value = '';
         notaQuillEditandoId = null;
+        blockEditorEditandoId = null;
+        beSwitchTab('quill');
     });
 }
 
-// ===== Save Quill Note =====
+// ===== Save Note (Quill or Blocks) =====
 if (btnSalvarNotaQuill) {
     btnSalvarNotaQuill.addEventListener('click', () => {
         if (!paginaAtivaId) {
@@ -2195,19 +2287,36 @@ if (btnSalvarNotaQuill) {
             Swal.fire("Atenção", "Digite um título para a nota.", "warning");
             return;
         }
-        const conteudo = quillNota ? quillNota.root.innerHTML : '';
-        if (!conteudo || conteudo === '<p><br></p>') {
-            Swal.fire("Atenção", "Escreva algum conteúdo na nota.", "warning");
-            return;
+        if (editorActiveTab === 'quill') {
+            const conteudo = quillNota ? quillNota.root.innerHTML : '';
+            if (!conteudo || conteudo === '<p><br></p>') {
+                Swal.fire("Atenção", "Escreva algum conteúdo na nota.", "warning");
+                return;
+            }
+            const dados = { titulo, conteudo, tipo: "quill", tagId: paginaAtivaId };
+            const request = notaQuillEditandoId
+                ? fetch(`${API_NOTAS_URL}/${notaQuillEditandoId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) })
+                : fetch(API_NOTAS_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) });
+            request.then(() => {
+                bootstrap.Modal.getInstance(modalQuillEditor).hide();
+                Swal.fire("Sucesso", "Nota salva com sucesso!", "success");
+            }).catch(err => console.error(err));
+        } else {
+            const conteudo = beGetData();
+            if (!conteudo || conteudo === '[]' || conteudo === '[{"id":"b1","type":"paragraph","data":{"text":""}}]') {
+                Swal.fire("Atenção", "Adicione algum conteúdo na nota.", "warning");
+                return;
+            }
+            const dados = { titulo, conteudo, tipo: "blocks", tagId: paginaAtivaId };
+            const request = blockEditorEditandoId
+                ? fetch(`${API_NOTAS_URL}/${blockEditorEditandoId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) })
+                : fetch(API_NOTAS_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) });
+            request.then(() => {
+                bootstrap.Modal.getInstance(modalQuillEditor).hide();
+                Swal.fire("Sucesso", "Nota salva com sucesso!", "success");
+                carregarNotas();
+            }).catch(err => console.error(err));
         }
-        const dados = { titulo, conteudo, tipo: "quill", tagId: paginaAtivaId };
-        const request = notaQuillEditandoId
-            ? fetch(`${API_NOTAS_URL}/${notaQuillEditandoId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) })
-            : fetch(API_NOTAS_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) });
-        request.then(() => {
-            bootstrap.Modal.getInstance(modalQuillEditor).hide();
-            Swal.fire("Sucesso", "Nota salva com sucesso!", "success");
-        }).catch(err => console.error(err));
     });
 }
 
@@ -2221,6 +2330,480 @@ if (btnNovaNotaTexto) {
         if (quillNota) quillNota.root.innerHTML = '';
         if (inputTituloQuill) inputTituloQuill.value = '';
         notaQuillEditandoId = null;
+        blockEditorEditandoId = null;
+    });
+}
+
+// ===== Editor Tab Switching =====
+document.querySelectorAll('.editor-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        beSwitchTab(tab.dataset.editor);
+    });
+});
+
+// ===== Block Editor Engine =====
+function beGenerateId() { return 'b' + (++blockEditorIdCounter); }
+
+function beInit() {
+    blockEditorBlocks = [];
+    blockEditorIdCounter = 0;
+    blockEditorEditandoId = null;
+    beEnsureDefaultBlock();
+    beRender();
+}
+
+function beEnsureDefaultBlock() {
+    if (blockEditorBlocks.length === 0) {
+        blockEditorBlocks.push({ id: beGenerateId(), type: 'paragraph', data: { text: '' } });
+    }
+}
+
+function beRender() {
+    const container = document.getElementById('blockEditorBlocks');
+    if (!container) return;
+    beEnsureDefaultBlock();
+    container.innerHTML = '';
+    blockEditorBlocks.forEach((block, index) => {
+        const el = beCreateBlockElement(block, index);
+        container.appendChild(el);
+    });
+    const lastBlock = container.lastElementChild;
+    if (lastBlock) {
+        const textEl = lastBlock.querySelector('[contenteditable]') || lastBlock.querySelector('textarea');
+        if (textEl && document.activeElement !== textEl) textEl.focus();
+    }
+}
+
+function beCreateBlockElement(block, index) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'block-editor-block';
+    wrapper.dataset.blockId = block.id;
+
+    const dragHandle = document.createElement('div');
+    dragHandle.className = 'block-drag-handle';
+    dragHandle.textContent = '⠿';
+
+    const deleteBtn = document.createElement('div');
+    deleteBtn.className = 'block-delete-button';
+    deleteBtn.textContent = '×';
+    deleteBtn.title = 'Deletar bloco';
+    deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        beDeleteBlock(block.id);
+    });
+
+    const content = document.createElement('div');
+    content.className = 'block-content';
+
+    switch (block.type) {
+        case 'paragraph': {
+            content.contentEditable = true;
+            content.classList.add('block-type-paragraph');
+            content.dataset.placeholder = 'Digite / para comandos...';
+            content.textContent = block.data.text || '';
+            if (!content.textContent) content.textContent = '';
+            content.addEventListener('input', () => {
+                block.data.text = content.textContent;
+                beCheckSlashCommand(content, block);
+            });
+            content.addEventListener('keydown', (e) => beHandleTextKeydown(e, block));
+            content.addEventListener('blur', () => {
+                if (!content.textContent) block.data.text = '';
+            });
+            wrapper.appendChild(dragHandle);
+            wrapper.appendChild(content);
+            wrapper.appendChild(deleteBtn);
+
+            const addBtn = document.createElement('div');
+            addBtn.className = 'block-add-button';
+            addBtn.textContent = '+';
+            addBtn.title = 'Adicionar bloco';
+            addBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                beShowAddMenu(addBtn, block.id);
+            });
+            wrapper.appendChild(addBtn);
+            break;
+        }
+        case 'heading': {
+            const level = block.data.level || 2;
+            const headingEl = document.createElement('div');
+            headingEl.contentEditable = true;
+            headingEl.classList.add('heading-level-' + level);
+            headingEl.dataset.placeholder = level === 1 ? 'Título grande...' : level === 2 ? 'Título...' : 'Subtítulo...';
+            headingEl.textContent = block.data.text || '';
+            headingEl.addEventListener('input', () => { block.data.text = headingEl.textContent; });
+            headingEl.addEventListener('keydown', (e) => beHandleTextKeydown(e, block));
+            content.appendChild(headingEl);
+            wrapper.appendChild(dragHandle);
+            wrapper.appendChild(content);
+            wrapper.appendChild(deleteBtn);
+
+            const addBtn = document.createElement('div');
+            addBtn.className = 'block-add-button';
+            addBtn.textContent = '+';
+            addBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                beShowAddMenu(addBtn, block.id);
+            });
+            wrapper.appendChild(addBtn);
+            break;
+        }
+        case 'checklist': {
+            content.classList.add('block-type-checklist');
+            const list = document.createElement('div');
+            list.className = 'checklist-container';
+            const items = block.data.items || [{ text: '', checked: false }];
+            items.forEach((item, i) => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'checklist-item';
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = item.checked;
+                cb.addEventListener('change', () => {
+                    item.checked = cb.checked;
+                    textEl.classList.toggle('checked', cb.checked);
+                });
+                const textEl = document.createElement('div');
+                textEl.className = 'checklist-item-text' + (item.checked ? ' checked' : '');
+                textEl.contentEditable = true;
+                textEl.textContent = item.text;
+                textEl.dataset.placeholder = 'Item da checklist...';
+                textEl.addEventListener('input', () => { item.text = textEl.textContent; });
+                textEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        block.data.items.splice(i + 1, 0, { text: '', checked: false });
+                        beRender();
+                        beFocusBlock(block.id);
+                    }
+                    if (e.key === 'Backspace' && !textEl.textContent && block.data.items.length > 1) {
+                        e.preventDefault();
+                        block.data.items.splice(i, 1);
+                        beRender();
+                        beFocusBlock(block.id);
+                    }
+                });
+                itemEl.appendChild(cb);
+                itemEl.appendChild(textEl);
+                list.appendChild(itemEl);
+            });
+            content.appendChild(list);
+            wrapper.appendChild(dragHandle);
+            wrapper.appendChild(content);
+            wrapper.appendChild(deleteBtn);
+
+            const addBtn = document.createElement('div');
+            addBtn.className = 'block-add-button';
+            addBtn.textContent = '+';
+            addBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                beShowAddMenu(addBtn, block.id);
+            });
+            wrapper.appendChild(addBtn);
+            break;
+        }
+        case 'code': {
+            content.classList.add('block-type-code');
+            const langLabel = document.createElement('div');
+            langLabel.className = 'code-lang-label';
+            langLabel.textContent = block.data.language || 'javascript';
+            const textarea = document.createElement('textarea');
+            textarea.className = 'code-editor';
+            textarea.value = block.data.code || '';
+            textarea.placeholder = 'Digite seu código...';
+            textarea.spellcheck = false;
+            textarea.addEventListener('input', () => { block.data.code = textarea.value; });
+            textarea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    beAddBlock('paragraph', block.id);
+                }
+                if (e.key === 'Backspace' && !textarea.value) {
+                    e.preventDefault();
+                    beDeleteBlock(block.id, 'up');
+                }
+            });
+            content.appendChild(langLabel);
+            content.appendChild(textarea);
+            wrapper.appendChild(dragHandle);
+            wrapper.appendChild(content);
+            wrapper.appendChild(deleteBtn);
+
+            const addBtn = document.createElement('div');
+            addBtn.className = 'block-add-button';
+            addBtn.textContent = '+';
+            addBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                beShowAddMenu(addBtn, block.id);
+            });
+            wrapper.appendChild(addBtn);
+            break;
+        }
+        case 'table': {
+            content.classList.add('block-type-table');
+            const table = document.createElement('table');
+            table.className = 'block-table';
+            const headers = block.data.headers || ['', ''];
+            const rows = block.data.rows || [['', '']];
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            headers.forEach((h, ci) => {
+                const th = document.createElement('th');
+                const div = document.createElement('div');
+                div.contentEditable = true;
+                div.textContent = h;
+                div.dataset.placeholder = 'Coluna';
+                div.addEventListener('input', () => { headers[ci] = div.textContent; });
+                headerRow.appendChild(th);
+                th.appendChild(div);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            const tbody = document.createElement('tbody');
+            rows.forEach((row, ri) => {
+                const tr = document.createElement('tr');
+                row.forEach((cell, ci) => {
+                    const td = document.createElement('td');
+                    const div = document.createElement('div');
+                    div.contentEditable = true;
+                    div.textContent = cell;
+                    div.addEventListener('input', () => { rows[ri][ci] = div.textContent; });
+                    td.appendChild(div);
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            content.appendChild(table);
+            const controls = document.createElement('div');
+            controls.className = 'block-table-controls';
+            const addRowBtn = document.createElement('button');
+            addRowBtn.className = 'block-table-add-row';
+            addRowBtn.textContent = '➕ Linha';
+            addRowBtn.addEventListener('click', () => {
+                rows.push(new Array(headers.length).fill(''));
+                beRender();
+                beFocusBlock(block.id);
+            });
+            const addColBtn = document.createElement('button');
+            addColBtn.className = 'block-table-add-col';
+            addColBtn.textContent = '➕ Coluna';
+            addColBtn.addEventListener('click', () => {
+                headers.push('');
+                rows.forEach(r => r.push(''));
+                beRender();
+                beFocusBlock(block.id);
+            });
+            controls.appendChild(addRowBtn);
+            controls.appendChild(addColBtn);
+            content.appendChild(controls);
+            wrapper.appendChild(dragHandle);
+            wrapper.appendChild(content);
+            wrapper.appendChild(deleteBtn);
+
+            const addBtn = document.createElement('div');
+            addBtn.className = 'block-add-button';
+            addBtn.textContent = '+';
+            addBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                beShowAddMenu(addBtn, block.id);
+            });
+            wrapper.appendChild(addBtn);
+            break;
+        }
+    }
+
+    return wrapper;
+}
+
+function beHandleTextKeydown(e, block) {
+    const el = e.currentTarget;
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        beAddBlock('paragraph', block.id);
+    } else if (e.key === 'Backspace' && !el.textContent) {
+        e.preventDefault();
+        beDeleteBlock(block.id, 'up');
+    } else if (e.key === 'ArrowUp') {
+        const prev = beGetPrevBlock(block.id);
+        if (prev) beFocusBlock(prev.id);
+    } else if (e.key === 'ArrowDown') {
+        const next = beGetNextBlock(block.id);
+        if (next) beFocusBlock(next.id);
+    }
+}
+
+function beGetBlockIndex(id) {
+    return blockEditorBlocks.findIndex(b => b.id === id);
+}
+
+function beGetPrevBlock(id) {
+    const idx = beGetBlockIndex(id);
+    return idx > 0 ? blockEditorBlocks[idx - 1] : null;
+}
+
+function beGetNextBlock(id) {
+    const idx = beGetBlockIndex(id);
+    return idx < blockEditorBlocks.length - 1 ? blockEditorBlocks[idx + 1] : null;
+}
+
+function beAddBlock(type, afterId) {
+    const idx = afterId ? beGetBlockIndex(afterId) + 1 : blockEditorBlocks.length;
+    const newBlock = { id: beGenerateId(), type: type, data: {} };
+    if (type === 'heading') newBlock.data = { text: '', level: 2 };
+    else if (type === 'checklist') newBlock.data = { items: [{ text: '', checked: false }] };
+    else if (type === 'code') newBlock.data = { code: '', language: 'javascript' };
+    else if (type === 'table') newBlock.data = { headers: ['', ''], rows: [['', '']] };
+    else newBlock.data = { text: '' };
+    blockEditorBlocks.splice(idx, 0, newBlock);
+    beRender();
+    setTimeout(() => beFocusBlock(newBlock.id), 50);
+}
+
+function beDeleteBlock(id, direction) {
+    const idx = beGetBlockIndex(id);
+    if (idx === -1) return;
+    const focusTarget = direction === 'up' ? blockEditorBlocks[idx - 1] : blockEditorBlocks[idx + 1];
+    blockEditorBlocks.splice(idx, 1);
+    beEnsureDefaultBlock();
+    beRender();
+    if (focusTarget) {
+        setTimeout(() => beFocusBlock(focusTarget.id), 50);
+    }
+}
+
+function beFocusBlock(id) {
+    const container = document.getElementById('blockEditorBlocks');
+    if (!container) return;
+    const el = container.querySelector(`[data-block-id="${id}"]`);
+    if (!el) return;
+    const textEl = el.querySelector('[contenteditable]') || el.querySelector('textarea');
+    if (textEl) {
+        textEl.focus();
+        if (textEl.contentEditable === 'true') {
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(textEl);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }
+}
+
+function beCheckSlashCommand(contentEl, block) {
+    const text = contentEl.textContent || '';
+    if (text === '/') {
+        const rect = contentEl.getBoundingClientRect();
+        const container = document.getElementById('blockEditorContainer');
+        const containerRect = container.getBoundingClientRect();
+        const menu = document.getElementById('slashMenu');
+        if (menu) {
+            menu.style.display = 'block';
+            menu.style.left = '0px';
+            menu.style.top = (contentEl.offsetTop + 28) + 'px';
+            menu.dataset.targetBlockId = block.id;
+            menu.dataset.targetType = 'paragraph';
+            const items = menu.querySelectorAll('.slash-menu-item');
+            items.forEach((item, i) => {
+                item.classList.toggle('active', i === 0);
+            });
+        }
+    } else if (text.length > 1) {
+        beHideSlashMenu();
+    }
+}
+
+function beHideSlashMenu() {
+    const menu = document.getElementById('slashMenu');
+    if (menu) menu.style.display = 'none';
+}
+
+function beShowAddMenu(anchorEl, blockId) {
+    beHideSlashMenu();
+    const rect = anchorEl.getBoundingClientRect();
+    const container = document.getElementById('blockEditorContainer');
+    const containerRect = container.getBoundingClientRect();
+    const menu = document.getElementById('slashMenu');
+    if (menu) {
+        menu.style.display = 'block';
+        menu.style.left = '0px';
+        menu.style.top = (anchorEl.offsetTop + 24) + 'px';
+        menu.dataset.targetBlockId = blockId;
+        menu.dataset.targetType = 'add';
+        const items = menu.querySelectorAll('.slash-menu-item');
+        items.forEach(item => item.classList.remove('active'));
+    }
+}
+
+function beGetData() {
+    return JSON.stringify(blockEditorBlocks);
+}
+
+function beLoadData(jsonStr) {
+    try {
+        blockEditorBlocks = JSON.parse(jsonStr);
+        blockEditorIdCounter = blockEditorBlocks.length;
+    } catch (e) {
+        blockEditorBlocks = [];
+        blockEditorIdCounter = 0;
+    }
+    beEnsureDefaultBlock();
+    beRender();
+}
+
+function beBlocksToTextPreview(blocks) {
+    if (!blocks || blocks.length === 0) return 'Nota vazia';
+    let preview = '';
+    for (const b of blocks) {
+        if (b.type === 'paragraph' && b.data.text) preview += b.data.text + ' ';
+        else if (b.type === 'heading' && b.data.text) preview += b.data.text + ' ';
+        else if (b.type === 'checklist' && b.data.items) {
+            const checked = b.data.items.filter(i => i.checked).length;
+            const total = b.data.items.length;
+            preview += `[${checked}/${total}] `;
+        }
+        else if (b.type === 'code') preview += '[Código] ';
+        else if (b.type === 'table') preview += '[Tabela] ';
+    }
+    return preview.trim() || 'Nota em blocos';
+}
+
+// ===== Slash menu handlers =====
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('slashMenu');
+    if (menu && !menu.contains(e.target) && !e.target.closest('[contenteditable]')) {
+        beHideSlashMenu();
+    }
+});
+
+const slashMenu = document.getElementById('slashMenu');
+if (slashMenu) {
+    slashMenu.addEventListener('click', (e) => {
+        const item = e.target.closest('.slash-menu-item');
+        if (!item) return;
+        const type = item.dataset.type;
+        const targetId = slashMenu.dataset.targetBlockId;
+        const targetType = slashMenu.dataset.targetType;
+        if (!targetId) return;
+        beHideSlashMenu();
+        if (targetType === 'add') {
+            beAddBlock(type, targetId);
+        } else {
+            const idx = beGetBlockIndex(targetId);
+            if (idx === -1) return;
+            const oldBlock = blockEditorBlocks[idx];
+            const newData = {};
+            if (type === 'heading') { newData.text = oldBlock.data.text || ''; newData.level = 2; }
+            else if (type === 'checklist') { newData.items = [{ text: oldBlock.data.text || '', checked: false }]; }
+            else if (type === 'code') { newData.code = oldBlock.data.text || ''; newData.language = 'javascript'; }
+            else if (type === 'table') { newData.headers = ['', '']; newData.rows = [['', '']]; }
+            else { newData.text = oldBlock.data.text || ''; }
+            blockEditorBlocks[idx] = { id: oldBlock.id, type: type, data: newData };
+            beRender();
+            setTimeout(() => beFocusBlock(targetId), 50);
+        }
     });
 }
 
@@ -2266,7 +2849,19 @@ if (btnDividirTarefaIAEditar) {
 // ===== IA: Resumir Nota =====
 if (btnResumirNotaIA) {
     btnResumirNotaIA.addEventListener('click', () => {
-        const conteudo = quillNota ? quillNota.root.innerText.trim() : '';
+        let conteudo = '';
+        if (editorActiveTab === 'quill') {
+            conteudo = quillNota ? quillNota.root.innerText.trim() : '';
+        } else {
+            const textParts = [];
+            blockEditorBlocks.forEach(b => {
+                if (b.type === 'paragraph' && b.data.text) textParts.push(b.data.text);
+                else if (b.type === 'heading' && b.data.text) textParts.push(b.data.text);
+                else if (b.type === 'checklist' && b.data.items) textParts.push(b.data.items.map(i => i.text).join(', '));
+                else if (b.type === 'code' && b.data.code) textParts.push(b.data.code);
+            });
+            conteudo = textParts.join('\n').trim();
+        }
         if (!conteudo) {
             Swal.fire("Atenção", "Escreva algum conteúdo na nota primeiro.", "warning");
             return;

@@ -1,16 +1,18 @@
 # 🚀 Workspace To-Do, Notes, Habits & Finance
 
-Aplicação web completa para produtividade pessoal com **Quadro Kanban**, **Editor de Texto Rico (Quill.js)** para tarefas e notas, **Bloco de Notas Digital (Canvas)**, **Rastreador de Hábitos** com gráfico de contribuição estilo GitHub, **Assistente IA (Gemini)**, **Pomodoro Timer**, **Controle Financeiro**, **Agenda Diária (Time Blocking)** e **Mapas Mentais (Mind Maps)**.
+Aplicação web completa para produtividade pessoal com **Quadro Kanban**, **Nota de Texto (Texto Rico + Editor em Blocos estilo Notion)**, **Bloco de Notas Digital (Canvas)**, **Rastreador de Hábitos** com gráfico de contribuição estilo GitHub, **Assistente IA (Gemini)**, **Pomodoro Timer**, **Controle Financeiro**, **Agenda Diária (Time Blocking)** e **Mapas Mentais (Mind Maps)**.
 
 ---
 
 ## ✨ Funcionalidades Principais
 
-### 📝 Editor de Texto Rico nas Tarefas (Estilo Notion)
+### 📝 Nota de Texto (Texto Rico + Editor em Blocos)
+- **Duas abas no mesmo modal:** A nota de texto oferece "📝 Texto Rico" (Quill.js) e "🧱 Blocos" (editor estilo Notion).
+- **🧱 Editor em Blocos:** Digite `/` para abrir menu e escolher entre Título, Checklist, Código ou Tabela. Enter cria novo bloco, Backspace deleta bloco vazio.
+- **📝 Texto Rico:** Quill.js com negrito, itálico, listas, links, realce de sintaxe (Highlight.js) e imagens.
 - **Descrição com Quill.js:** Tanto ao criar quanto ao editar tarefas, a descrição usa o editor Quill.js (negrito, itálico, listas, links) em vez de um `<textarea>` simples.
 - **Blocos de Código:** Suporte a código com realce de sintaxe (Highlight.js) nas notas.
 - **Imagens:** Arraste ou cole imagens diretamente no editor de notas.
-- **Checklists:** Listas de verificação interativas dentro das notas.
 
 ### 📊 Rastreador de Hábitos (Habit Tracker)
 - **Mapa de Contribuição Geral:** Gráfico agregado estilo GitHub nos dias do último ano. A intensidade da cor varia conforme a quantidade de hábitos concluídos no dia (mais hábitos = quadrado mais forte).
@@ -249,7 +251,7 @@ workspace-todo-app/
 ## 📸 Preview das Funcionalidades
 
 - **Kanban com Drag & Drop** — Arraste tarefas entre colunas
-- **Quill.js** — Editor rico para descrições de tarefas e notas
+- **Nota de Texto** — Duas abas: Quill.js (texto rico) e Block Editor (blocos estilo Notion)
 - **Gráfico de Hábitos** — Mapa de contribuição agregado estilo GitHub
 - **Canvas Digital** — Desenho à mão livre com múltiplas páginas
 - **Pomodoro Timer** — Foco/descanso fixo na sidebar
