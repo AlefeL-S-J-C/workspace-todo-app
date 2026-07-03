@@ -16,6 +16,7 @@ namespace TodoApi
         public DbSet<RegistroHabito> RegistroHabitos { get; set; }
         public DbSet<TimeBlock> TimeBlocks { get; set; }
         public DbSet<MindMap> MindMaps { get; set; }
+        public DbSet<RegistroPomodoro> RegistrosPomodoro { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -80,6 +81,12 @@ namespace TodoApi
                 .HasOne(m => m.Tag)
                 .WithMany()
                 .HasForeignKey(m => m.TagId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RegistroPomodoro>()
+                .HasOne(r => r.Tarefa)
+                .WithMany()
+                .HasForeignKey(r => r.TarefaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Urgencia>().HasData(

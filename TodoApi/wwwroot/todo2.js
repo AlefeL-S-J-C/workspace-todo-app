@@ -18,6 +18,7 @@ const API_IA_DIVIDIR_URL = "http://localhost:5152/ia/dividir-tarefa";
 const API_IA_RESUMIR_URL = "http://localhost:5152/ia/resumir-nota";
 const API_TIMEBLOCKS_URL = "http://localhost:5152/timeblocks";
 const API_MINDMAPS_URL = "http://localhost:5152/mindmaps";
+const API_POMODORO_URL = "http://localhost:5152/pomodoro";
 
 let arrUrgencia = [];
 let arrTags = [];
@@ -42,6 +43,8 @@ let mindMapConnectMode = false;
 let mindMapConnectFrom = null;
 let mindMapEditandoId = null;
 let mindMapNextNodeId = 1;
+let mindMapDefaultShape = "rounded";
+let mindMapDefaultConnType = "straight";
 
 const formModalTarefa = document.getElementById("formModalTarefa");
 const inputTituloModal = document.getElementById("inputTituloModal");
@@ -436,6 +439,8 @@ function carregarTarefas() {
         .then(dados => {
             tarefas = dados;
             renderizarTarefas();
+            pomodoroPopularTarefas();
+            pomodoroAtualizarHistorico();
             if (tarefaSelecionadaId !== null) {
                 const updated = tarefas.find(t => t.id === tarefaSelecionadaId);
                 if (updated) {
@@ -518,10 +523,20 @@ function renderizarTarefas() {
             if (verTarefaTitulo) verTarefaTitulo.textContent = tarefa.texto;
             if (verTarefaDataInicio) verTarefaDataInicio.textContent = formatarDataBR(tarefa.dataInicio);
             if (verTarefaDataFim) verTarefaDataFim.textContent = formatarDataBR(tarefa.dataFim, true);
-            if (verTarefaDescricao) verTarefaDescricao.textContent = tarefa.descricao || "Sem descrição.";
+            if (verTarefaDescricao) {
+                const _desc = tarefa.descricao || "";
+                const _semTags = _desc.replace(/<[^>]*>/g, "").trim();
+                verTarefaDescricao.innerHTML = _semTags ? _desc : "Sem descrição.";
+            }
             if (verTarefaUrgenciaBadge) {
                 verTarefaUrgenciaBadge.textContent = urgenciaDados.descricao;
                 verTarefaUrgenciaBadge.style.backgroundColor = urgenciaDados.cor;
+            }
+            const verCusto = document.getElementById("verTarefaCusto");
+            if (verCusto) {
+                verCusto.textContent = tarefa.custoEstimado
+                    ? `R$ ${Number(tarefa.custoEstimado).toFixed(2)}`
+                    : "Não definido";
             }
             renderizarSubtarefas(tarefa.subtarefas);
         });
@@ -542,6 +557,10 @@ function renderizarTarefas() {
             if (selectEditarUrgencia) {
                 selectEditarUrgencia.value = tarefa.urgenciaId;
                 atualizarCorSelect(selectEditarUrgencia);
+            }
+            const inputEditarCusto = document.getElementById("inputEditarCusto");
+            if (inputEditarCusto) {
+                inputEditarCusto.value = tarefa.custoEstimado ? tarefa.custoEstimado.toString() : "";
             }
         });
 
@@ -587,6 +606,54 @@ function renderizarTarefas() {
             const divAlertaWrapper = document.createElement("div");
             divAlertaWrapper.innerHTML = badgeAlertaTexto;
             divBadges.appendChild(divAlertaWrapper.firstChild);
+        }
+        if (tarefa.custoEstimado && tarefa.custoEstimado > 0) {
+            const bCusto = document.createElement("span");
+            bCusto.className = "badge extra-small bg-success text-white";
+            bCusto.style.cursor = "pointer";
+            bCusto.title = "Clique para lançar no Financeiro";
+            bCusto.textContent = `R$ ${Number(tarefa.custoEstimado).toFixed(2)}`;
+            bCusto.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const tagFinanceira = arrTags.find(t => t.tipo === "financeiro");
+                if (!tagFinanceira) {
+                    Swal.fire("Atenção", "Nenhuma página Financeiro encontrada.", "warning");
+                    return;
+                }
+                Swal.fire({
+                    title: "Lançar no Financeiro?",
+                    html: `Criar despesa de <b>R$ ${Number(tarefa.custoEstimado).toFixed(2)}</b><br>para "${tarefa.texto}"?`,
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Sim, lançar!",
+                    cancelButtonText: "Cancelar"
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        const hoje = new Date().toISOString().split("T")[0];
+                        fetch(API_TRANSACOES_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                descricao: `Custo: ${tarefa.texto}`,
+                                valor: Number(tarefa.custoEstimado),
+                                tipo: "Despesa",
+                                categoria: "Outros",
+                                data: hoje,
+                                tagId: tagFinanceira.id
+                            })
+                        }).then(res => {
+                            if (res.ok) {
+                                Swal.fire("Lançado!", "Valor registrado como despesa no Financeiro.", "success");
+                            } else {
+                                throw new Error();
+                            }
+                        }).catch(() => {
+                            Swal.fire("Erro", "Não foi possível lançar no Financeiro.", "error");
+                        });
+                    }
+                });
+            });
+            divBadges.appendChild(bCusto);
         }
         card.appendChild(divBadges);
 
@@ -699,6 +766,9 @@ if (formModalTarefa) {
 
         if (texto === "" || !dataInicio || !dataFim || !urgenciaId || !tagId) return;
 
+        const inputCusto = document.getElementById("inputCustoModal");
+        const custoEstimado = inputCusto ? parseFloat(inputCusto.value) || null : null;
+
         const novaTarefa = {
             texto: texto,
             concluida: false,
@@ -707,7 +777,8 @@ if (formModalTarefa) {
             dataFim: dataFim,
             descricao: genericDescricao,
             urgenciaId: urgenciaId,
-            tagId: tagId
+            tagId: tagId,
+            custoEstimado: custoEstimado
         };
 
         fetch(API_URL, {
@@ -719,6 +790,7 @@ if (formModalTarefa) {
             formModalTarefa.reset();
             selectUrgenciaModal.style.backgroundColor = "";
             selectUrgenciaModal.style.color = "";
+            if (inputCusto) inputCusto.value = "";
             carregarTarefas();
         });
     });
@@ -739,6 +811,9 @@ if (formModalEditarTarefa) {
         const tOriginal = tarefas.find(item => item.id === idParaEditar);
         const mudouParaConcluido = (statusAtualizado === "Concluído" && (!tOriginal || tOriginal.status !== "Concluído"));
 
+        const inputEditarCusto = document.getElementById("inputEditarCusto");
+        const custoEstimado = inputEditarCusto ? parseFloat(inputEditarCusto.value) || null : null;
+
         const tarefaEditada = {
             id: idParaEditar,
             texto: textoAtualizado,
@@ -748,7 +823,8 @@ if (formModalEditarTarefa) {
             dataFim: dataFimAtualizada,
             descricao: descricaoAtualizada,
             urgenciaId: urgenciaAtualizada,
-            tagId: tagAtualizada
+            tagId: tagAtualizada,
+            custoEstimado: custoEstimado
         };
 
         fetch(`${API_URL}/${idParaEditar}`, {
@@ -759,6 +835,38 @@ if (formModalEditarTarefa) {
             btnFecharModalEditar.click();
             if (mudouParaConcluido && typeof confetti === "function") {
                 confetti();
+            }
+            if (mudouParaConcluido && custoEstimado && custoEstimado > 0) {
+                const tagFinanceira = arrTags.find(t => t.tipo === "financeiro");
+                Swal.fire({
+                    title: "Lançar no Financeiro?",
+                    html: `Deseja lançar o valor de <b>R$ ${custoEstimado.toFixed(2)}</b> no módulo Financeiro como despesa?`,
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Sim, lançar!",
+                    cancelButtonText: "Não"
+                }).then(result => {
+                    if (result.isConfirmed && tagFinanceira) {
+                        const hoje = new Date().toISOString().split("T")[0];
+                        const transacao = {
+                            descricao: `Custo: ${textoAtualizado}`,
+                            valor: custoEstimado,
+                            tipo: "Despesa",
+                            categoria: "Outros",
+                            data: hoje,
+                            tagId: tagFinanceira.id
+                        };
+                        fetch(API_TRANSACOES_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(transacao)
+                        }).then(() => {
+                            Swal.fire("Sucesso!", "Valor lançado no Financeiro.", "success");
+                        }).catch(() => {
+                            Swal.fire("Erro", "Não foi possível lançar no Financeiro.", "error");
+                        });
+                    }
+                });
             }
             carregarTarefas();
         });
@@ -1786,7 +1894,11 @@ function inicializarCalendario(eventosIniciais) {
                     if (verTarefaTitulo) verTarefaTitulo.textContent = tarefa.texto;
                     if (verTarefaDataInicio) verTarefaDataInicio.textContent = formatarDataBR(tarefa.dataInicio);
                     if (verTarefaDataFim) verTarefaDataFim.textContent = formatarDataBR(tarefa.dataFim, true);
-                    if (verTarefaDescricao) verTarefaDescricao.textContent = tarefa.descricao || "Sem descrição.";
+                    if (verTarefaDescricao) {
+                        const _desc = tarefa.descricao || "";
+                        const _semTags = _desc.replace(/<[^>]*>/g, "").trim();
+                        verTarefaDescricao.innerHTML = _semTags ? _desc : "Sem descrição.";
+                    }
                     if (verTarefaUrgenciaBadge) {
                         verTarefaUrgenciaBadge.textContent = u.descricao;
                         verTarefaUrgenciaBadge.style.backgroundColor = u.cor;
@@ -1853,6 +1965,8 @@ const pomodoroPhase = document.getElementById("pomodoroPhase");
 const pomodoroStartBtn = document.getElementById("pomodoroStartBtn");
 const pomodoroResetBtn = document.getElementById("pomodoroResetBtn");
 const pomodoroSessionsEl = document.getElementById("pomodoroSessions");
+const pomodoroTarefaSelect = document.getElementById("pomodoroTarefaSelect");
+const pomodoroHistory = document.getElementById("pomodoroHistory");
 
 function pomodoroFormatTime(secs) {
     const m = String(Math.floor(secs / 60)).padStart(2, "0");
@@ -1877,8 +1991,29 @@ function pomodoroUpdateDisplay() {
     }
 }
 
+function pomodoroSalvarRegistro() {
+    if (!pomodoroTarefaSelect || pomodoroTarefaSelect.value === "") return;
+    const tarefaId = parseInt(pomodoroTarefaSelect.value);
+    const cicloMin = Math.floor(POMODORO_FOCUS / 60);
+    const registro = {
+        tarefaId: tarefaId,
+        data: new Date().toISOString().slice(0, 19).replace("T", " "),
+        ciclosCompletados: 1,
+        totalMinutos: cicloMin
+    };
+    fetch(`${API_POMODORO_URL}/registros`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registro)
+    }).then(() => pomodoroAtualizarHistorico()).catch(err => console.error(err));
+}
+
 function pomodoroStart() {
     if (pomodoroRunning) return;
+    if (pomodoroTarefaSelect && pomodoroTarefaSelect.value === "") {
+        Swal.fire("Atenção", "Selecione uma tarefa antes de iniciar o Pomodoro.", "warning");
+        return;
+    }
     pomodoroRunning = true;
     if (pomodoroStartBtn) pomodoroStartBtn.textContent = "⏸ Pausar";
     pomodoroInterval = setInterval(() => {
@@ -1888,6 +2023,7 @@ function pomodoroStart() {
             pomodoroStop();
             if (pomodoroFocus) {
                 pomodoroSessions++;
+                pomodoroSalvarRegistro();
                 pomodoroFocus = false;
                 pomodoroTimeLeft = POMODORO_BREAK;
                 pomodoroUpdateDisplay();
@@ -1941,6 +2077,47 @@ if (pomodoroResetBtn) {
 }
 
 pomodoroUpdateDisplay();
+
+function pomodoroPopularTarefas() {
+    if (!pomodoroTarefaSelect) return;
+    const selected = pomodoroTarefaSelect.value;
+    pomodoroTarefaSelect.innerHTML = '<option value="">Nenhuma tarefa selecionada</option>';
+    tarefas.filter(t => t.tagId === paginaAtivaId && t.status !== "Concluído").forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = t.texto;
+        pomodoroTarefaSelect.appendChild(opt);
+    });
+    if (selected && [...pomodoroTarefaSelect.options].some(o => o.value === selected)) {
+        pomodoroTarefaSelect.value = selected;
+    }
+}
+
+function pomodoroAtualizarHistorico() {
+    if (!pomodoroHistory) return;
+    if (!pomodoroTarefaSelect || pomodoroTarefaSelect.value === "") {
+        pomodoroHistory.textContent = "";
+        return;
+    }
+    const tarefaId = parseInt(pomodoroTarefaSelect.value);
+    fetch(`${API_POMODORO_URL}/registros/${tarefaId}`)
+        .then(res => res.json())
+        .then(registros => {
+            const totalCiclos = registros.reduce((s, r) => s + r.ciclosCompletados, 0);
+            const totalMin = registros.reduce((s, r) => s + r.totalMinutos, 0);
+            const tarefa = tarefas.find(t => t.id === tarefaId);
+            if (tarefa && totalCiclos > 0) {
+                pomodoroHistory.textContent = `"${tarefa.texto}": ${totalCiclos} ciclo${totalCiclos > 1 ? 's' : ''} / ${totalMin} min`;
+            } else {
+                pomodoroHistory.textContent = "";
+            }
+        })
+        .catch(() => {});
+}
+
+if (pomodoroTarefaSelect) {
+    pomodoroTarefaSelect.addEventListener("change", pomodoroAtualizarHistorico);
+}
 
 if (Notification.permission === "default") {
     Notification.requestPermission();
@@ -2463,7 +2640,11 @@ function renderizarAgenda() {
                         if (verTarefaTitulo) verTarefaTitulo.textContent = tarefa.texto;
                         if (verTarefaDataInicio) verTarefaDataInicio.textContent = formatarDataBR(tarefa.dataInicio);
                         if (verTarefaDataFim) verTarefaDataFim.textContent = formatarDataBR(tarefa.dataFim, true);
-                        if (verTarefaDescricao) verTarefaDescricao.textContent = tarefa.descricao || "Sem descrição.";
+                        if (verTarefaDescricao) {
+                            const _desc = tarefa.descricao || "";
+                            const _semTags = _desc.replace(/<[^>]*>/g, "").trim();
+                            verTarefaDescricao.innerHTML = _semTags ? _desc : "Sem descrição.";
+                        }
                         if (verTarefaUrgenciaBadge) {
                             verTarefaUrgenciaBadge.textContent = u.descricao;
                             verTarefaUrgenciaBadge.style.backgroundColor = u.cor;
@@ -2613,6 +2794,7 @@ const btnSalvarMindMap = document.getElementById("btnSalvarMindMap");
 const inputMindMapTitulo = document.getElementById("inputMindMapTitulo");
 const mindMapStatus = document.getElementById("mindMapStatus");
 const btnMindMapAjuda = document.getElementById("btnMindMapAjuda");
+const btnMindMapFerramentas = document.getElementById("btnMindMapFerramentas");
 
 function mostrarMindMaps() {
     modoMindMap = true;
@@ -2763,20 +2945,36 @@ function renderizarMindMapSvg() {
         const fromNode = mindMapNodes.find(n => n.id === conn.from);
         const toNode = mindMapNodes.find(n => n.id === conn.to);
         if (!fromNode || !toNode) return;
+        const connType = conn.type || mindMapDefaultConnType;
         const fromW = Math.max(80, (fromNode.texto?.length || 4) * 9 + 20);
         const toW = Math.max(80, (toNode.texto?.length || 4) * 9 + 20);
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", fromNode.x + fromW / 2);
-        line.setAttribute("y1", fromNode.y + 25);
-        line.setAttribute("x2", toNode.x + toW / 2);
-        line.setAttribute("y2", toNode.y + 25);
-        line.setAttribute("stroke", "#64748b");
-        line.setAttribute("stroke-width", "2");
-        line.setAttribute("marker-end", "url(#mmArrow)");
-        line.dataset.from = conn.from;
-        line.dataset.to = conn.to;
-        line.style.cursor = "pointer";
-        line.addEventListener("click", (e) => {
+        const x1 = fromNode.x + fromW / 2;
+        const y1 = fromNode.y + 25;
+        const x2 = toNode.x + toW / 2;
+        const y2 = toNode.y + 25;
+        let el;
+        if (connType === "curved") {
+            const cx = (x1 + x2) / 2;
+            const cy = (y1 + y2) / 2 - 40;
+            el = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            el.setAttribute("d", `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+            el.setAttribute("fill", "none");
+        } else {
+            el = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            el.setAttribute("x1", x1);
+            el.setAttribute("y1", y1);
+            el.setAttribute("x2", x2);
+            el.setAttribute("y2", y2);
+        }
+        el.setAttribute("stroke", "#64748b");
+        el.setAttribute("stroke-width", "2");
+        if (connType === "dashed") el.setAttribute("stroke-dasharray", "5,5");
+        else if (connType === "dotted") el.setAttribute("stroke-dasharray", "2,2");
+        el.setAttribute("marker-end", "url(#mmArrow)");
+        el.dataset.from = conn.from;
+        el.dataset.to = conn.to;
+        el.style.cursor = "pointer";
+        el.addEventListener("click", (e) => {
             e.stopPropagation();
             if (btnMindMapDelete && btnMindMapDelete.classList.contains("btn-dark")) {
                 mindMapConnections = mindMapConnections.filter(c => !(c.from === conn.from && c.to === conn.to));
@@ -2784,7 +2982,7 @@ function renderizarMindMapSvg() {
                 renderizarMindMapSvg();
             }
         });
-        svg.appendChild(line);
+        svg.appendChild(el);
     });
 }
 
@@ -2798,6 +2996,8 @@ function renderizarMindMapDivs() {
     mindMapNodes.forEach(node => {
         const div = document.createElement("div");
         div.className = "mm-node";
+        const shape = node.shape || mindMapDefaultShape;
+        if (shape !== "rounded") div.classList.add("shape-" + shape);
         const isSelected = node.id === mindMapSelectedNodeId;
         const isConnectOrigin = mindMapConnectMode && mindMapConnectFrom === node.id;
         if (isSelected) div.classList.add("selected");
@@ -2820,7 +3020,7 @@ function renderizarMindMapDivs() {
                 if (mindMapConnectFrom !== node.id) {
                     const exists = mindMapConnections.some(c => c.from === mindMapConnectFrom && c.to === node.id);
                     if (!exists) {
-                        mindMapConnections.push({ from: mindMapConnectFrom, to: node.id });
+                        mindMapConnections.push({ from: mindMapConnectFrom, to: node.id, type: mindMapDefaultConnType });
                     }
                     mindMapConnectMode = false;
                     mindMapConnectFrom = null;
@@ -2848,6 +3048,25 @@ function renderizarMindMapDivs() {
             mindMapSelectedNodeId = node.id;
             if (btnMindMapToTask) btnMindMapToTask.disabled = false;
             renderizarMindMapDivs();
+        });
+
+        div.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            mindMapSelectedNodeId = node.id;
+            renderizarMindMapDivs();
+            Swal.fire({
+                title: "Converter em Tarefa?",
+                text: `Criar tarefa a partir do nó "${node.texto}"?`,
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Sim, converter!",
+                cancelButtonText: "Cancelar"
+            }).then(result => {
+                if (result.isConfirmed) {
+                    mindMapConverterNoEmTarefa(node);
+                }
+            });
         });
 
         div.addEventListener("dblclick", (e) => {
@@ -2943,7 +3162,8 @@ function mmCriarNo(x, y) {
                 x: Math.max(0, x - 60),
                 y: Math.max(0, y - 25),
                 texto: result.value.trim(),
-                cor: "#e2e8f0"
+                cor: "#e2e8f0",
+                shape: mindMapDefaultShape
             };
             mindMapNodes.push(node);
             mindMapSelectedNodeId = node.id;
@@ -3014,45 +3234,48 @@ function _swalComFocus(opt) {
     return Swal.fire(opt);
 }
 
+function mindMapConverterNoEmTarefa(node) {
+    if (!node || !node.texto) {
+        _swalComFocus("Atenção", "Selecione um nó com texto primeiro.", "warning");
+        return;
+    }
+    if (!paginaAtivaId) {
+        _swalComFocus("Atenção", "Selecione uma página primeiro.", "warning");
+        return;
+    }
+    const hoje = new Date();
+    const dataStr = hoje.toISOString().split("T")[0];
+    const fimStr = new Date(hoje.getTime() + 86400000).toISOString().split("T")[0] + "T23:59";
+    const novaTarefa = {
+        texto: node.texto,
+        concluida: false,
+        status: "A Fazer",
+        dataInicio: dataStr,
+        dataFim: fimStr,
+        descricao: `Criado a partir do mapa mental: "${inputMindMapTitulo ? inputMindMapTitulo.value : "Sem título"}"`,
+        urgenciaId: 5,
+        tagId: paginaAtivaId
+    };
+    fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(novaTarefa)
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        _swalComFocus("Sucesso!", "Nó convertido em tarefa!", "success");
+        carregarTarefas();
+    })
+    .catch(err => {
+        console.error(err);
+        _swalComFocus("Erro", "Não foi possível criar a tarefa. Verifique o servidor.", "error");
+    });
+}
+
 if (btnMindMapToTask) {
     btnMindMapToTask.addEventListener("click", () => {
-        console.log("btnMindMapToTask clicked, selectedNodeId:", mindMapSelectedNodeId, "nodes:", mindMapNodes.length);
         const node = mindMapNodes.find(n => n.id === mindMapSelectedNodeId);
-        if (!node || !node.texto) {
-            _swalComFocus("Atenção", "Selecione um nó com texto primeiro.", "warning");
-            return;
-        }
-        if (!paginaAtivaId) {
-            _swalComFocus("Atenção", "Selecione uma página primeiro.", "warning");
-            return;
-        }
-        const hoje = new Date();
-        const dataStr = hoje.toISOString().split("T")[0];
-        const fimStr = new Date(hoje.getTime() + 86400000).toISOString().split("T")[0] + "T23:59";
-        const novaTarefa = {
-            texto: node.texto,
-            concluida: false,
-            status: "A Fazer",
-            dataInicio: dataStr,
-            dataFim: fimStr,
-            descricao: `Criado a partir do mapa mental: "${inputMindMapTitulo ? inputMindMapTitulo.value : "Sem título"}"`,
-        urgenciaId: 5,
-            tagId: paginaAtivaId
-        };
-        fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(novaTarefa)
-        })
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            _swalComFocus("Sucesso!", "Nó convertido em tarefa!", "success");
-            carregarTarefas();
-        })
-        .catch(err => {
-            console.error(err);
-            _swalComFocus("Erro", "Não foi possível criar a tarefa. Verifique o servidor.", "error");
-        });
+        mindMapConverterNoEmTarefa(node);
     });
 }
 
@@ -3088,31 +3311,72 @@ function exportMindMap() {
         const fromNode = mindMapNodes.find(n => n.id === conn.from);
         const toNode = mindMapNodes.find(n => n.id === conn.to);
         if (!fromNode || !toNode) return;
+        const connType = conn.type || mindMapDefaultConnType;
         const fromW = Math.max(80, (fromNode.texto?.length || 4) * 9 + 20);
         const toW = Math.max(80, (toNode.texto?.length || 4) * 9 + 20);
-        const line = document.createElementNS(ns, "line");
-        line.setAttribute("x1", fromNode.x + fromW / 2);
-        line.setAttribute("y1", fromNode.y + 25);
-        line.setAttribute("x2", toNode.x + toW / 2);
-        line.setAttribute("y2", toNode.y + 25);
-        line.setAttribute("stroke", "#64748b");
-        line.setAttribute("stroke-width", "2");
-        line.setAttribute("marker-end", "url(#exportArrow)");
-        exportSvg.appendChild(line);
+        const x1 = fromNode.x + fromW / 2;
+        const y1 = fromNode.y + 25;
+        const x2 = toNode.x + toW / 2;
+        const y2 = toNode.y + 25;
+        let el;
+        if (connType === "curved") {
+            const cx = (x1 + x2) / 2;
+            const cy = (y1 + y2) / 2 - 40;
+            el = document.createElementNS(ns, "path");
+            el.setAttribute("d", `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+            el.setAttribute("fill", "none");
+        } else {
+            el = document.createElementNS(ns, "line");
+            el.setAttribute("x1", x1);
+            el.setAttribute("y1", y1);
+            el.setAttribute("x2", x2);
+            el.setAttribute("y2", y2);
+        }
+        el.setAttribute("stroke", "#64748b");
+        el.setAttribute("stroke-width", "2");
+        if (connType === "dashed") el.setAttribute("stroke-dasharray", "5,5");
+        else if (connType === "dotted") el.setAttribute("stroke-dasharray", "2,2");
+        el.setAttribute("marker-end", "url(#exportArrow)");
+        exportSvg.appendChild(el);
     });
     mindMapNodes.forEach(node => {
         const nodeW = Math.max(80, (node.texto?.length || 4) * 9 + 20);
+        const nodeH = 36;
+        const shape = node.shape || mindMapDefaultShape;
         const g = document.createElementNS(ns, "g");
-        const rect = document.createElementNS(ns, "rect");
-        rect.setAttribute("x", node.x);
-        rect.setAttribute("y", node.y);
-        rect.setAttribute("width", nodeW);
-        rect.setAttribute("height", "36");
-        rect.setAttribute("rx", "10");
-        rect.setAttribute("fill", "#e2e8f0");
-        rect.setAttribute("stroke", "#cbd5e1");
-        rect.setAttribute("stroke-width", "2");
-        g.appendChild(rect);
+        let shapeEl;
+        if (shape === "circle") {
+            const r = Math.max(40, nodeW / 2, nodeH / 2);
+            shapeEl = document.createElementNS(ns, "circle");
+            shapeEl.setAttribute("cx", node.x + nodeW / 2);
+            shapeEl.setAttribute("cy", node.y + nodeH / 2);
+            shapeEl.setAttribute("r", r);
+        } else if (shape === "pill") {
+            shapeEl = document.createElementNS(ns, "rect");
+            shapeEl.setAttribute("x", node.x);
+            shapeEl.setAttribute("y", node.y);
+            shapeEl.setAttribute("width", nodeW);
+            shapeEl.setAttribute("height", nodeH);
+            shapeEl.setAttribute("rx", nodeH / 2);
+        } else if (shape === "sharp") {
+            shapeEl = document.createElementNS(ns, "rect");
+            shapeEl.setAttribute("x", node.x);
+            shapeEl.setAttribute("y", node.y);
+            shapeEl.setAttribute("width", nodeW);
+            shapeEl.setAttribute("height", nodeH);
+            shapeEl.setAttribute("rx", "0");
+        } else {
+            shapeEl = document.createElementNS(ns, "rect");
+            shapeEl.setAttribute("x", node.x);
+            shapeEl.setAttribute("y", node.y);
+            shapeEl.setAttribute("width", nodeW);
+            shapeEl.setAttribute("height", nodeH);
+            shapeEl.setAttribute("rx", "10");
+        }
+        shapeEl.setAttribute("fill", "#e2e8f0");
+        shapeEl.setAttribute("stroke", "#cbd5e1");
+        shapeEl.setAttribute("stroke-width", "2");
+        g.appendChild(shapeEl);
         const text = document.createElementNS(ns, "text");
         text.setAttribute("x", node.x + nodeW / 2);
         text.setAttribute("y", node.y + 24);
@@ -3202,6 +3466,90 @@ if (btnNovoMindMap) {
     });
 }
 
+const shapeDescriptions = {
+    rounded: "Arredondado (padrão) - ideal para textos curtos",
+    circle: "Circular - destaque visual para ideias principais",
+    sharp: "Reto - visual mais formal e limpo",
+    pill: "Pílula - moderna e estilizada"
+};
+
+const connDescriptions = {
+    straight: "Reta com seta (padrão) - clássica e direta",
+    curved: "Curva - suave e orgânica, ideal para fluxos",
+    dashed: "Tracejada - indica relação indireta ou opcional",
+    dotted: "Pontilhada - sutil, para conexões fracas"
+};
+
+if (btnMindMapFerramentas) {
+    btnMindMapFerramentas.addEventListener("click", () => {
+        const node = mindMapNodes.find(n => n.id === mindMapSelectedNodeId);
+        const shapeAtual = node?.shape || mindMapDefaultShape;
+        const connAtual = mindMapDefaultConnType;
+        Swal.fire({
+            title: "🔧 Ferramentas",
+            html: `
+                <div style="text-align:left;font-size:0.9rem;">
+                    <label class="fw-semibold mb-1">Forma do Nó:</label>
+                    <select id="swalShapeSelect" class="form-select form-select-sm mb-3">
+                        ${Object.entries(shapeDescriptions).map(([k, v]) => {
+                            const nomes = { rounded: "Arredondado", circle: "Circular", sharp: "Reto", pill: "Pílula" };
+                            return `<option value="${k}" ${k === shapeAtual ? 'selected' : ''}>${nomes[k] || k}</option>`;
+                        }).join('')}
+                    </select>
+                    <div id="swalShapeDesc" class="small text-muted mb-3 p-2 bg-light rounded">${shapeDescriptions[shapeAtual]}</div>
+
+                    <label class="fw-semibold mb-1">Tipo de Conexão:</label>
+                    <select id="swalConnSelect" class="form-select form-select-sm mb-3">
+                        ${Object.entries(connDescriptions).map(([k, v]) => {
+                            const nomes = { straight: "Reta", curved: "Curva", dashed: "Tracejada", dotted: "Pontilhada" };
+                            return `<option value="${k}" ${k === connAtual ? 'selected' : ''}>${nomes[k] || k}</option>`;
+                        }).join('')}
+                    </select>
+                    <div id="swalConnDesc" class="small text-muted mb-2 p-2 bg-light rounded">${connDescriptions[connAtual]}</div>
+                </div>
+            `,
+            didOpen: () => {
+                const shapeSelect = document.getElementById("swalShapeSelect");
+                const connSelect = document.getElementById("swalConnSelect");
+                const shapeDesc = document.getElementById("swalShapeDesc");
+                const connDesc = document.getElementById("swalConnDesc");
+                if (shapeSelect) shapeSelect.addEventListener("change", () => {
+                    shapeDesc.textContent = shapeDescriptions[shapeSelect.value] || "";
+                });
+                if (connSelect) connSelect.addEventListener("change", () => {
+                    connDesc.textContent = connDescriptions[connSelect.value] || "";
+                });
+            },
+            showCancelButton: true,
+            confirmButtonText: "Aplicar",
+            cancelButtonText: "Cancelar",
+            preConfirm: () => {
+                const shapeSel = document.getElementById("swalShapeSelect");
+                const connSel = document.getElementById("swalConnSelect");
+                return {
+                    shape: shapeSel ? shapeSel.value : mindMapDefaultShape,
+                    connType: connSel ? connSel.value : mindMapDefaultConnType
+                };
+            }
+        }).then(result => {
+            if (result.isConfirmed && result.value) {
+                mindMapDefaultShape = result.value.shape;
+                mindMapDefaultConnType = result.value.connType;
+                if (node) {
+                    node.shape = mindMapDefaultShape;
+                }
+                if (mindMapStatus) {
+                    const nomesShape = { rounded: "Arredondado", circle: "Circular", sharp: "Reto", pill: "Pílula" };
+                    const nomesConn = { straight: "Reta", curved: "Curva", dashed: "Tracejada", dotted: "Pontilhada" };
+                    mindMapStatus.textContent = `Forma: ${nomesShape[mindMapDefaultShape] || mindMapDefaultShape} | Conexão: ${nomesConn[mindMapDefaultConnType] || mindMapDefaultConnType}`;
+                }
+                renderizarMindMapDivs();
+                renderizarMindMapSvg();
+            }
+        });
+    });
+}
+
 if (btnMindMapAjuda) {
     btnMindMapAjuda.addEventListener("click", () => {
         Swal.fire({
@@ -3214,6 +3562,7 @@ if (btnMindMapAjuda) {
                     <p><b>✏️ Duplo-clique</b> em um nó para editar o texto.</p>
                     <p><b>🗑️ Clique em "Remover"</b>, depois clique em um nó ou conexão para apagar.</p>
                     <p><b>➜ Criar Tarefa</b> converte o nó selecionado em uma tarefa real.</p>
+                    <p><b>🔧 Ferramentas</b> permite escolher forma dos nós e tipo de conexão.</p>
                 </div>
             `,
             confirmButtonText: "OK"

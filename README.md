@@ -29,6 +29,7 @@ Aplicação web completa para produtividade pessoal com **Quadro Kanban**, **Edi
 - **Contador de Sessões:** Exibe quantos ciclos de foco foram concluídos.
 - **Notificações:** Alerta no navegador ao final de cada ciclo.
 - **Feedback Visual:** Timer muda de cor (verde = foco, azul = descanso).
+- **Vinculado a Tarefas:** Selecione uma tarefa antes de iniciar. Cada ciclo completo é registrado no banco com histórico ("Tarefa X: 3 ciclos / 75 min").
 
 ### 📅 Calendário Integrado
 - **Visão Unificada:** Exibe tarefas e transações financeiras num único calendário.
@@ -42,6 +43,7 @@ Aplicação web completa para produtividade pessoal com **Quadro Kanban**, **Edi
 - **Filtros Inteligentes:** Filtre por categoria e mês.
 - **Categorias:** Alimentação, Transporte, Moradia, Saúde, Educação, Lazer, Salário, Investimento, Outros.
 - **Formatação BRL:** Valores em formato monetário brasileiro (R$).
+- **Link com Tarefas:** Tarefas com "Custo Estimado" exibem badge `R$ XX.XX` no card. Clique no badge para lançar a despesa diretamente no Financeiro. Ao concluir uma tarefa com custo, o sistema pergunta se deseja registrar a despesa.
 
 ### 📋 Gestão de Tarefas (Kanban)
 - **Organização por Páginas:** Crie espaços de trabalho (Ex: Trabalho, Estudos, Faculdade, Pessoal, Casa).
@@ -70,8 +72,9 @@ Aplicação web completa para produtividade pessoal com **Quadro Kanban**, **Edi
 - **Nós Interativos:** Duplo-clique no canvas para criar bolhas de texto.
 - **Conexões Visuais:** Modo "Conectar" para ligar nós com setas direcionais.
 - **Arrastar e Editar:** Mova nós livremente; duplo-clique em um nó para editar o texto.
-- **Converter em Tarefa:** Selecione um nó e clique em "Criar Tarefa" para transformá-lo em uma tarefa real.
-- **Exportar como PNG:** Baixe o mapa mental como imagem.
+- **Converter em Tarefa:** Selecione um nó e clique em "Criar Tarefa" para transformá-lo em uma tarefa real. Também disponível via **clique direito** no nó.
+- **Ferramentas (🔧):** Botão que abre seletor de **formas de nó** (Arredondado, Circular, Reto, Pílula) e **tipos de conexão** (Reta, Curva, Tracejada, Pontilhada), cada um com descrição.
+- **Exportar como PNG:** Baixe o mapa mental como imagem (respeitando formas e tipos de conexão).
 - **Ajuda Integrada:** Botão "❓" com tutorial rápido de uso.
 
 ### 📱 Interface e Experiência (UI/UX)
@@ -166,6 +169,7 @@ workspace-todo-app/
 │   ├── RegistroHabito.cs          # Daily habit records
 │   ├── TimeBlock.cs               # Time blocking model
 │   ├── MindMap.cs                 # Mind map model
+│   ├── RegistroPomodoro.cs        # Pomodoro history model
 │   ├── GeminiModels.cs            # Gemini API response models
 │   ├── TodoApi.csproj
 │   ├── appsettings.json
@@ -230,6 +234,8 @@ workspace-todo-app/
 | POST | `/mindmaps` | Cria novo mapa mental |
 | PUT | `/mindmaps/{id}` | Atualiza mapa mental |
 | DELETE | `/mindmaps/{id}` | Remove mapa mental |
+| GET | `/pomodoro/registros/{tarefaId}` | Histórico Pomodoro de uma tarefa |
+| POST | `/pomodoro/registros` | Salva registro de ciclo Pomodoro |
 
 ### Fluxo de Dados
 

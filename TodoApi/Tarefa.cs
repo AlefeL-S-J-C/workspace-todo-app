@@ -15,6 +15,7 @@ namespace TodoApi
         public Urgencia? Urgencia { get; set; }
         public int? TagId { get; set; }
         public Tag? Tag { get; set; }
+        public decimal? CustoEstimado { get; set; }
         public List<Subtarefa> Subtarefas { get; set; } = new List<Subtarefa>();
     }
 }

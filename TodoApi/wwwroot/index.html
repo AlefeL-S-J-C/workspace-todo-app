@@ -10,7 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css" rel="stylesheet">
-    <link href="content/CSS/style.css" rel="stylesheet">
+    <link href="content/CSS/style.css?v=2" rel="stylesheet">
 </head>
 
 <body>
@@ -38,6 +38,10 @@
                     <button class="btn btn-sm btn-outline-secondary" id="pomodoroResetBtn">↺</button>
                 </div>
                 <div class="pomodoro-sessions" id="pomodoroSessions">🍅 0</div>
+                <select class="form-select form-select-sm mt-1" id="pomodoroTarefaSelect" style="font-size:0.7rem;max-width:100%;">
+                    <option value="">Nenhuma tarefa selecionada</option>
+                </select>
+                <div class="pomodoro-history mt-1" id="pomodoroHistory" style="font-size:0.65rem;color:var(--text-muted);line-height:1.3;"></div>
             </div>
 
             <div class="px-3 mt-auto mb-3">
@@ -242,6 +246,10 @@
                         <label class="form-label fw-semibold">Grau de Urgência</label>
                         <select id="selectUrgenciaModal" class="form-select" required></select>
                     </div>
+                    <div>
+                        <label class="form-label fw-semibold">Custo Estimado (R$) <small class="text-muted">opcional</small></label>
+                        <input type="number" id="inputCustoModal" class="form-control" placeholder="0,00" step="0.01" min="0">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -290,6 +298,10 @@
                         <label class="form-label fw-semibold">Alterar Grau de Urgência</label>
                         <select id="selectEditarUrgencia" class="form-select"></select>
                     </div>
+                    <div>
+                        <label class="form-label fw-semibold">Custo Estimado (R$) <small class="text-muted">opcional</small></label>
+                        <input type="number" id="inputEditarCusto" class="form-control" placeholder="0,00" step="0.01" min="0">
+                    </div>
                 </div>
                 <div class="modal-footer d-flex flex-column gap-2">
                     <button type="button" class="btn btn-outline-info btn-sm fw-bold w-100" id="btnDividirTarefaIAEditar">🤖 Dividir Tarefa com IA</button>
@@ -317,6 +329,7 @@
                         <small class="text-muted d-block">Prazos e Cronograma:</small>
                         <span class="small d-block"><b>Início:</b> <span id="verTarefaDataInicio"></span></span>
                         <span class="small d-block"><b>Prazo Final:</b> <span id="verTarefaDataFim"></span></span>
+                        <span class="small d-block"><b>Custo Estimado:</b> <span id="verTarefaCusto"></span></span>
                     </div>
                     <div>
                         <h6 class="fw-bold">Descrição</h6>
@@ -515,7 +528,7 @@
                 </div>
                 <div class="modal-body p-2 position-relative">
                     <div class="mindmap-toolbar d-flex gap-2 mb-2 p-2 rounded align-items-center flex-wrap">
-                        <span class="badge bg-secondary me-2">Ferramentas</span>
+                        <button class="btn btn-sm btn-secondary" id="btnMindMapFerramentas" title="Configurar forma dos nós e tipo de conexão">🔧 Ferramentas</button>
                         <button class="btn btn-sm btn-dark" id="btnMindMapAddNode">➕ Nó</button>
                         <button class="btn btn-sm btn-outline-secondary" id="btnMindMapConnect">🔗 Conectar</button>
                         <button class="btn btn-sm btn-outline-danger" id="btnMindMapDelete">🗑️ Remover</button>
@@ -570,6 +583,6 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
-    <script src="todo2.js"></script>
+    <script src="todo2.js?v=2"></script>
 </body>
 </html>

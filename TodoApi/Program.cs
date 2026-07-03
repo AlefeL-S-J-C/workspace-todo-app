@@ -113,6 +113,7 @@ app.MapPut("/tarefas/{id}", async (int id, Tarefa tarefaAtualizada, AppDbContext
     tarefa.Descricao = tarefaAtualizada.Descricao;
     tarefa.UrgenciaId = tarefaAtualizada.UrgenciaId;
     tarefa.TagId = tarefaAtualizada.TagId;
+    tarefa.CustoEstimado = tarefaAtualizada.CustoEstimado;
 
     await db.SaveChangesAsync();
     return Results.NoContent();
@@ -611,6 +612,29 @@ app.MapDelete("/mindmaps/{id}", async (int id, AppDbContext db) =>
     db.MindMaps.Remove(map);
     await db.SaveChangesAsync();
     return Results.Ok();
+});
+
+// ===== Pomodoro History =====
+app.MapGet("/pomodoro/registros/{tarefaId}", async (int tarefaId, AppDbContext db) =>
+{
+    var registros = await db.RegistrosPomodoro
+        .Where(r => r.TarefaId == tarefaId)
+        .OrderByDescending(r => r.Data)
+        .ToListAsync();
+    return Results.Ok(registros);
+});
+
+app.MapPost("/pomodoro/registros", async (RegistroPomodoro novo, AppDbContext db) =>
+{
+    if (novo.TarefaId == 0)
+        return Results.BadRequest(new { mensagem = "Tarefa é obrigatória." });
+
+    if (novo.CiclosCompletados <= 0)
+        return Results.BadRequest(new { mensagem = "Ciclos deve ser maior que zero." });
+
+    db.RegistrosPomodoro.Add(novo);
+    await db.SaveChangesAsync();
+    return Results.Created($"/pomodoro/registros/{novo.Id}", novo);
 });
 
 app.Run();
